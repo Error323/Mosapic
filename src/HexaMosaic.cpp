@@ -79,32 +79,48 @@ void HexaMosaic::Create() {
 	}
 
 	Image tile_img;
+	vInt ids;
+	std::vector<std::pair<int,int> > coords;
 	for (int j = 0; j < mHeight; j++)
+		for (int i = 0; i < mWidth; i++)
+			coords.push_back(std::pair<int,int>(i,j));
+	
+	random_shuffle(coords.begin(), coords.end());
+
+	for (size_t k = 0; k < coords.size(); k++)
 	{
+		int i = coords[k].first;
+		int j = coords[k].second;
 		cInt src_y = roundf(start_y + j * dy);
 		cFloat dst_y = unit_dy * radius * (j + 0.5f);
-		for (int i = 0; i < mWidth; i++)
+		cInt src_x = roundf(start_x + i * dx + ((j % 2) * (dx / 2.0f)));
+		cFloat dst_x = unit_dx * radius * (i + 0.5f + ((j % 2) / 2.0f));
+		src_data.clear();
+		HexaMosaic::ExtractInfo(src_img, src_x, src_y, radius, src_data);
+		// match with database
+		std::priority_queue<Match> KNN; // All nearest neighbours
+		for (int img_id = 0; img_id < record_count; img_id++)
 		{
-			cInt src_x = roundf(start_x + i * dx + ((j % 2) * (dx / 2.0f)));
-			cFloat dst_x = unit_dx * radius * (i + 0.5f + ((j % 2) / 2.0f));
-			src_data.clear();
-			HexaMosaic::ExtractInfo(src_img, src_x, src_y, radius, src_data);
-			// match with database
-			std::priority_queue<Match> KNN; // All nearest neighbours
-			for (int img_id = 0; img_id < record_count; img_id++)
+			float dist = 0.0f;
+			for (int dim = 0; dim < 3; dim++)
 			{
-				float dist = 0.0f;
-				for (int dim = 0; dim < 3; dim++)
-				{
-					dist += fabs(db_data[img_id*3+dim] - src_data[dim]);
-				}
-				KNN.push(Match(img_id, dist));
+				dist += fabs(db_data[img_id*3+dim] - src_data[dim]);
 			}
-			std::stringstream s;
-			s << KNN.top().id;
-			tile_img.Read(std::string("data/") + s.str() + ".bmp");
-			FillHexagon(tile_img, dst_img, dst_x, dst_y, radius);
+			KNN.push(Match(img_id, dist));
 		}
+
+		// Make sure we never use the same image twice
+		std::stringstream s;
+		int best_id = KNN.top().id;
+		while (!KNN.empty() && find(ids.begin(), ids.end(), best_id) != ids.end())
+		{
+			KNN.pop();
+			best_id = KNN.top().id;
+		}
+		ids.push_back(best_id);
+		s << best_id;
+		tile_img.Read(std::string("data/") + s.str() + ".bmp");
+		FillHexagon(tile_img, dst_img, dst_x, dst_y, radius);
 	}
 
 	dst_img.Write(mDestImage);
@@ -140,7 +156,7 @@ inline bool HexaMosaic::InHexagon(cFloat inX, cFloat inY, cFloat inRadius) {
 }
 
 void HexaMosaic::ExtractInfo(rImage inImg, cInt inX, cInt inY, cFloat inRadius, rvFloat outData) {
-	cFloat radius = inRadius + 0.5f;
+	cFloat radius = inRadius;
 	float r_avg, g_avg, b_avg;
 	r_avg = g_avg = b_avg = 0.0f;
 	int count = 0;
@@ -150,9 +166,11 @@ void HexaMosaic::ExtractInfo(rImage inImg, cInt inX, cInt inY, cFloat inRadius, 
 		{
 			if (HexaMosaic::InHexagon(i, j, radius))
 			{
-				Uint32 color = inImg.GetPixel(i+inX, j+inY);
 				Uint8 r, g, b;
-				SDL_GetRGB(color, inImg.GetFormat(), &r, &g, &b);
+				if (SDL_BYTEORDER == SDL_BIG_ENDIAN)
+					inImg.GetRgb(i+inX, j+inY, &r, &g, &b);
+				else
+					inImg.GetRgb(i+inX, j+inY, &b, &g, &r);
 				r_avg += WEIGHT_RED * r;
 				g_avg += WEIGHT_GREEN * g;
 				b_avg += WEIGHT_BLUE * b;

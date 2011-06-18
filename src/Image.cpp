@@ -22,9 +22,9 @@ int Image::Read(rcString inFileName) {
 	if (mSurface == NULL) 
 	{
 		fprintf(stderr, "Couldn't load %s: %s\n", inFileName.c_str(), SDL_GetError());
-		return 1;
+		return 0;
 	}
-	return 0;
+	return 1;
 }
 
 void Image::Write(rcString inFileName) {
@@ -50,9 +50,9 @@ Uint32 Image::GetPixel(cInt inX, cInt inY) {
 		}
 		case 3: {
 			if (SDL_BYTEORDER == SDL_BIG_ENDIAN)
-				return p[2] << 16 | p[1] << 8 | p[0];
-			else
 				return p[0] << 16 | p[1] << 8 | p[2];
+			else
+				return p[0] | p[1] << 8 | p[2] << 16;
 		}
 		case 4: {
 			return *(pUint32)p;
@@ -68,38 +68,28 @@ pSDL_PixelFormat Image::GetFormat() {
 	return mSurface->format;
 }
 
-bool Image::Resize(int inX, int inY, cBool inDeform, cFloat inCropScalar) {
+bool Image::Resize(cInt inSize) {
 	ASSERT(mSurface != NULL);
 
-	if (Width() < inX || Height() < inY)
+	if (Width() < inSize || Height() < inSize)
 		return false;
 
-	if (!inDeform) {
-		inX = inX < inY ? inX : inY;
-		inY = inX;
-	}
-
-	pSDL_Surface surface = SDL_CreateRGBSurface(SDL_SRCCOLORKEY, inX, inY, 24, 0, 0, 0, 0);
+	pSDL_Surface surface = SDL_CreateRGBSurface(SDL_SRCCOLORKEY, inSize, inSize, 24, 0, 0, 0, 0);
 	SDL_LockSurface(mSurface);
 
-	int x, y;
-	cInt X = Width();
-	cInt Y = Height();
+	cInt min = Width() < Height() ? Width() : Height();
+	cInt step_size = min / inSize;
+	cInt start_x = (Width() - min) / 2;
+	cInt start_y = (Height() - min) / 2;
 
-	float xSize = (1.0f-inCropScalar) * X;
-	float ySize = (1.0f-inCropScalar) * Y;
-	int xFactor = (int) roundf(xSize/inX);
-	int yFactor = (int) roundf(ySize/inY);
-	Uint32 p;
-
-	for (int i = 0; i < inX; i++)
+	for (int j = 0; j < inSize; j++)
 	{
-		x = (int) roundf(((X - xSize) / 2) + (i * (xSize / inX)));
-		for (int j = 0; j < inY; j++)
+		cInt y = start_y + j*step_size;
+		for (int i = 0; i < inSize; i++)
 		{
-			y = (int) roundf(((Y - ySize) / 2) + (j * (ySize / inY)));
-			p = Average(x, y, xFactor, yFactor);
-			PutPixel(surface, i, j, p);
+			cInt x = start_x + i*step_size;
+			cUint32 color = Average(x, y, step_size, step_size);
+			PutPixel(surface, i, j, color);
 		}
 	}
 
@@ -110,6 +100,13 @@ bool Image::Resize(int inX, int inY, cBool inDeform, cFloat inCropScalar) {
 	return true;
 }
 
+void Image::GetRgb(cInt inX, cInt inY, pUint8 r, pUint8 g, pUint8 b) {
+	cUint32 color = GetPixel(inX, inY);
+	*r = (color >> 16) & 0xFF;
+	*g = (color >> 8) & 0xFF;
+	*b = color & 0xFF;
+}
+
 Uint32 Image::Average(cInt inXStart, cInt inYStart, cInt inXEnd, cInt inYEnd) {
 	Uint32 r_sum, g_sum, b_sum;
 	r_sum = g_sum = b_sum = 0;
@@ -117,8 +114,7 @@ Uint32 Image::Average(cInt inXStart, cInt inYStart, cInt inXEnd, cInt inYEnd) {
 	for (int x = inXStart; x < (inXStart+inXEnd); x++) {
 		for (int y = inYStart; y < (inYStart+inYEnd); y++) {
 			Uint8 r, g, b;
-			Uint32 p = GetPixel(x, y);
-			SDL_GetRGB(p, mSurface->format, &r, &g, &b);
+			GetRgb(x, y, &r, &g, &b);
 			r_sum += r;
 			g_sum += g;
 			b_sum += b;
@@ -130,9 +126,9 @@ Uint32 Image::Average(cInt inXStart, cInt inYStart, cInt inXEnd, cInt inYEnd) {
 	Uint8 b = b_sum/i;
 
 	if (SDL_BYTEORDER == SDL_BIG_ENDIAN)
-		return b << 16 | g << 8 | r;
-	else
 		return r << 16 | g << 8 | b;
+	else
+		return r | g << 8 | b << 16;
 }
 
 void Image::PutPixel(cInt inX, cInt inY, cUint32 inColor) {

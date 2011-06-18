@@ -18,7 +18,8 @@ public:
 
 	Uint32 GetPixel(cInt inX, cInt inY);
 	void PutPixel(cInt inX, cInt inY, cUint32 inColor);
-	bool Resize(int inX, int inY, cBool inDeform, cFloat inCropScalar);
+	void GetRgb(cInt inX, cInt inY, pUint8 r, pUint8 g, pUint8 b);
+	bool Resize(int inSize);
 	pSDL_PixelFormat GetFormat();
 
 	int Width();

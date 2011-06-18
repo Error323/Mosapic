@@ -48,10 +48,9 @@ void HexaCrawler::Crawl(const boost::filesystem::path &inPath) {
 void HexaCrawler::Process(rcString inImgName) {
 	std::cout << "Processing '" << inImgName << "'...";
 	static Image img;
-	img.Read(inImgName);
 
 	// Resize and store image
-	if (!img.Resize(100, 100, false, 0.1f))
+	if (!img.Read(inImgName) || !img.Resize(100))
 	{
 		std::cout << "[failed]" << std::endl;
 		return;
