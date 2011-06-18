@@ -4,8 +4,8 @@
 #include "Image.hpp"
 #include <cmath>
 
-#define HALF_HEXAGON_HEIGHT sinf(M_PI / 3.0f)
-#define HEXAGON_HEIGHT (2.0f * HALF_HEXAGON_HEIGHT)
+#define HALF_HEXAGON_WIDTH sinf(M_PI / 3.0f)
+#define HEXAGON_WIDTH (2.0f * HALF_HEXAGON_WIDTH)
 
 HexaMosaic::HexaMosaic(
 	rcString inSourceImage,
@@ -26,7 +26,7 @@ void HexaMosaic::Create() {
 	src_img.Read(mSourceImage);
 
 	// unit dimensions of hexagon facing upwards
-	cFloat unit_dx    = 2.0f * HALF_HEXAGON_HEIGHT;
+	cFloat unit_dx    = HEXAGON_WIDTH;
 	cFloat unit_dy    = 1.5f;
 	cFloat unit_ratio = unit_dx / unit_dy;
 	cFloat radius     = 20.0f;
@@ -70,19 +70,28 @@ void HexaMosaic::Create() {
 	dst_img.Write(mDestImage);
 }
 
-void HexaMosaic::FillHexagon(rImage inImg, cFloat inX, cFloat inY, float inRadius, cUint32 inColor) {
-
-	// XXX: Removes black edges. Should be fixed with anti-aliasing
-	inRadius += 1.0f;
-
-	for (int j = -inRadius; j < inRadius; j++)
+void HexaMosaic::FillHexagon(
+	rImage inImg, 
+	cFloat inX, 
+	cFloat inY, 
+	cFloat inRadius, 
+	cUint32 inColor
+) {
+	cFloat radius = inRadius + 0.5f;
+	for (int j = -radius; j < radius; j++)
 	{
-		for (int i = roundf(-inRadius * HALF_HEXAGON_HEIGHT); i < roundf(inRadius * HALF_HEXAGON_HEIGHT); i++)
+		for (int i = roundf(-radius * HALF_HEXAGON_WIDTH); i < roundf(radius * HALF_HEXAGON_WIDTH); i++)
 		{
-			if ( abs(i) < (j + inRadius) * HEXAGON_HEIGHT && -abs(i) > (j - inRadius) * HEXAGON_HEIGHT )
+			if (HexaMosaic::InHexagon(i, j, radius))
 			{
 				inImg.PutPixel(i+inX, j+inY, inColor);
 			}
 		}
 	}
+}
+
+inline bool HexaMosaic::InHexagon(cFloat inX, cFloat inY, cFloat inRadius) {
+	// NOTE: inRadius is defined from the hexagon's center to a corner
+	return   fabs(inX) < (inY + inRadius) * HEXAGON_WIDTH &&
+			-fabs(inX) > (inY - inRadius) * HEXAGON_WIDTH;
 }

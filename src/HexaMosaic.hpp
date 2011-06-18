@@ -31,8 +31,14 @@ private:
 		rImage inImg, 
 		cFloat inX, 
 		cFloat inY, 
-		float inRadius, 
+		cFloat inRadius, 
 		cUint32 inColor
+	);
+
+	static bool InHexagon(
+		cFloat inX, 
+		cFloat inY, 
+		cFloat inRadius
 	);
 };
 
