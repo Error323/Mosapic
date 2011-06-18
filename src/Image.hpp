@@ -2,25 +2,28 @@
 #define IMAGE_HDR
 
 #include <string>
-#include <SDL/SDL_image.h>
+#include "Types.hpp"
+
+DECLARE_CLASS(Image);
+DECLARE_CLASS(SDL_Surface);
 
 class Image {
 public:
 	Image();
-	Image(const int inWidth, const int inHeight);
+	Image(cInt inWidth, cInt inHeight);
 	~Image();
 
-	int Read(const std::string& inFileName);
-	void Write(const std::string& inFileName);
+	int Read(rcString inFileName);
+	void Write(rcString inFileName);
 
-	Uint32 GetPixel(const int inX, const int inY);
-	void PutPixel(const int inX, const int inY, const Uint32 inColor);
+	Uint32 GetPixel(cInt inX, cInt inY);
+	void PutPixel(cInt inX, cInt inY, cUint32 inColor);
 
 	int Width();
 	int Height();
 
 private:
-	SDL_Surface *mSurface;
+	pSDL_Surface mSurface;
 };
 
 #endif // IMAGE_HDR
