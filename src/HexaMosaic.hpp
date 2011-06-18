@@ -2,7 +2,9 @@
 #define HEXAMOSAIC_HDR
 
 #include <string>
+#include <SDL/SDL_image.h>
 
+class Image;
 class HexaMosaic {
 public:
 	HexaMosaic(
@@ -22,6 +24,7 @@ private:
 	std::string mDatabase;
 	int mWidth;
 	int mHeight;
+	void FillHexagon(Image& inImg, const float inX, const float inY, const float inRadius, const Uint32 inColor);
 };
 
 #endif // HEXAMOSAIC_HDR

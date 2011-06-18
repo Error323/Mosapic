@@ -26,7 +26,7 @@ void HexaMosaic::Create() {
 	const float unit_dx    = 2.0f * sinf(M_PI/3.0f);
 	const float unit_dy    = 1.5f;
 	const float unit_ratio = unit_dx / unit_dy;
-	const float radius     = 1.0f;
+	const float radius     = 20.0f;
 
 	// real ratios (from source image) of hexagon facing upwards
 	const float dst_ratio  = (mWidth * unit_dx) / (mHeight * unit_dy);
@@ -54,15 +54,33 @@ void HexaMosaic::Create() {
 	for (int j = 0; j < mHeight; j++)
 	{
 		int src_y = roundf(start_y + j * dy);
-		int dst_y = roundf(unit_dy * radius * (j + 0.5f));
+		float dst_y = unit_dy * radius * (j + 0.5f);
 		for (int i = 0; i < mWidth; i++)
 		{
 			int src_x = roundf(start_x + i * dx + ((j % 2) * (dx / 2.0f)));
-			int dst_x = roundf(unit_dx * radius * (i + 0.5f + ((j % 2) / 2.0f)));
+			float dst_x = unit_dx * radius * (i + 0.5f + ((j % 2) / 2.0f));
 			Uint32 color = src_img.GetPixel(src_x, src_y);
-			dst_img.PutPixel(dst_x, dst_y, color); 
+			FillHexagon(dst_img, dst_x, dst_y, radius, color);
+			//dst_img.PutPixel(dst_x, dst_y, color); 
 		}
 	}
 
 	dst_img.Write(mDestImage);
+}
+
+void HexaMosaic::FillHexagon(Image& inImg, const float inX, const float inY, float inRadius, const Uint32 inColor) {
+
+	// QUICKFIX
+	inRadius += 1;
+
+	for (int j = -inRadius; j < inRadius; j++)
+	{
+		for (int i = roundf(-inRadius * sinf(M_PI / 3.0f)); i < roundf(inRadius * sinf(M_PI / 3.0f)); i++)
+		{
+			if ( abs(i) <  float((j + inRadius) * 2.0f * sinf(M_PI / 3.0f)) && -abs(i) > float( (j - inRadius) * 2.0f* sinf(M_PI / 3.0f) ) )
+			{
+				inImg.PutPixel(i+inX, j+inY, inColor);
+			}
+		}
+	}
 }

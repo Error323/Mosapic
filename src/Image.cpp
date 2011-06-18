@@ -31,6 +31,9 @@ void Image::Write(const std::string& inFileName) {
 
 Uint32 Image::GetPixel(const int inX, const int inY) {
 	ASSERT(mSurface != NULL);
+	if (inX < 0 || inX >= Width() || inY < 0 || inY >= Height())
+		return 0;
+
     int bpp = mSurface->format->BytesPerPixel;
     /* Here p is the address to the pixel we want to retrieve */
     Uint8 *p = (Uint8 *)mSurface->pixels + inY * mSurface->pitch + inX * bpp;
@@ -52,6 +55,10 @@ Uint32 Image::GetPixel(const int inX, const int inY) {
 
 void Image::PutPixel(const int inX, const int inY, const Uint32 inColor) {
 	ASSERT(mSurface != NULL);
+
+	if (inX < 0 || inX >= Width() || inY < 0 || inY >= Height())
+		return;
+
     int bpp = mSurface->format->BytesPerPixel;
     /* Here p is the address to the pixel we want to set */
     Uint8 *p = (Uint8 *)mSurface->pixels + inY * mSurface->pitch + inX * bpp;
