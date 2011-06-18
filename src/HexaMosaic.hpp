@@ -19,8 +19,31 @@ public:
 
 	void Create();
 	
+	static bool InHexagon(
+		cFloat inX, 
+		cFloat inY, 
+		cFloat inRadius
+	);
+
+	static void ExtractInfo(
+		rImage inImg, 
+		cInt inX, 
+		cInt inY, 
+		cFloat inRadius, 
+		rvFloat outData
+	);
 
 private:
+	struct Match {
+		Match(): id(-1), val(-1.0f) {}
+		Match(int pid, float v): id(pid), val(v) {}
+		int id;
+		float val;
+		bool operator< (const Match& m) const {
+			return val > m.val;
+		}
+	};
+
 	String mSourceImage;
 	String mDestImage;
 	String mDatabase;
@@ -28,18 +51,14 @@ private:
 	int mHeight;
 
 	void FillHexagon(
-		rImage inImg, 
-		cFloat inX, 
-		cFloat inY, 
-		cFloat inRadius, 
-		cUint32 inColor
-	);
-
-	static bool InHexagon(
+		rImage inImgSrc, 
+		rImage inImgDst, 
 		cFloat inX, 
 		cFloat inY, 
 		cFloat inRadius
 	);
+
+	int Split(rvString v, rcString str, char c);
 };
 
 #endif // HEXAMOSAIC_HDR

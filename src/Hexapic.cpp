@@ -2,31 +2,37 @@
 #include <string>
 #include <cstdlib>
 
-#include "HexaMosaic.hpp"
+#include "Types.hpp"
 #include "Version.hpp"
+#include "HexaCrawler.hpp"
+#include "HexaMosaic.hpp"
 
 void PrintUsage() {
-	printf("Usage: hexapic\n");
+	std::cout << "Usage: hexapic" << std::endl;
 }
 
 int main(int argc,char **argv) {
-	printf("%s\n", HUMAN_NAME);
+	std::cout << HUMAN_NAME << std::endl;
 	switch (argc)
 	{
-		case 6: 
-		{
-			std::string source_image = argv[1];
-			std::string dest_image   = argv[2];
-			std::string database     = argv[3];
-			int width                = atoi(argv[4]);
-			int height               = atoi(argv[5]);
+		case 3: {
+			cString source_dir = argv[1];
+			cString dest_dir   = argv[2];
+			HexaCrawler hc;
+			hc.Crawl(source_dir, dest_dir);
+		}
+		case 6: {
+			cString source_image = argv[1];
+			cString dest_image   = argv[2];
+			cString database     = argv[3];
+			cInt width           = atoi(argv[4]);
+			cInt height          = atoi(argv[5]);
 			HexaMosaic hm(source_image, dest_image, database, width, height);
 			hm.Create();
 			break;
 		}
 
-		default: 
-		{
+		default: {
 			PrintUsage();
 			exit(1);
 		}
