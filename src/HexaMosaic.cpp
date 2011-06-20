@@ -97,16 +97,16 @@ void HexaMosaic::Create() {
 		cInt src_x = roundf(start_x + i * dx + ((j % 2) * (dx / 2.0f)));
 		cFloat dst_x = unit_dx * radius * (i + 0.5f + ((j % 2) / 2.0f));
 		src_data.clear();
-		HexaMosaic::ExtractInfo(src_img, src_x, src_y, radius, src_data);
+		int dimensions = HexaMosaic::ExtractInfo(src_img, src_x, src_y, radius, src_data);
 
 		// match with database
 		std::priority_queue<Match> KNN; // All nearest neighbours
 		for (int img_id = 0; img_id < record_count; img_id++)
 		{
 			float dist = 0.0f;
-			for (int dim = 0; dim < 3; dim++)
+			for (int dim = 0; dim < dimensions; dim++)
 			{
-				dist += powf(db_data[img_id*3+dim] - src_data[dim], 2.0f);
+				dist += powf(db_data[img_id*dimensions+dim] - src_data[dim], 2.0f);
 			}
 			KNN.push(Match(img_id, sqrtf(dist)));
 		}
@@ -165,32 +165,108 @@ inline bool HexaMosaic::InHexagon(cFloat inX, cFloat inY, cFloat inRadius) {
 			-fabs(inX) > (inY - inRadius) * HEXAGON_WIDTH;
 }
 
-void HexaMosaic::ExtractInfo(rImage inImg, cInt inX, cInt inY, cFloat inRadius, rvFloat outData) {
-	cFloat radius = inRadius;
-	float r_avg, g_avg, b_avg;
-	r_avg = g_avg = b_avg = 0.0f;
-	int count = 0;
-	for (int j = -radius; j < radius; j++)
+int HexaMosaic::ExtractInfo(rImage inImg, cInt inX, cInt inY, cFloat inRadius, rvFloat outData) {
+	static std::vector<std::pair<int,int> > sample_coordinates, circle_coordinates;
+	static vFloat weights;
+
+	// Cache coordinates
+	cInt half_radius = inRadius / 2.0f;
+	if (sample_coordinates.empty())
 	{
-		for (int i = roundf(-radius * HALF_HEXAGON_WIDTH); i < roundf(radius * HALF_HEXAGON_WIDTH); i++)
+		// Extract 6 points from image on half radius with 120 degrees space
+		float x = 0.0f;
+		float y = half_radius;
+		float theta = 0.0f;
+		for (int i = 0; i < 6; i++)
 		{
-			if (HexaMosaic::InHexagon(i, j, radius))
+			theta += M_PI / 3.0f;
+			x = inX + half_radius*sinf(theta);
+			y = inY + half_radius*cosf(theta);
+			sample_coordinates.push_back(std::pair<int,int>(int(roundf(x)), int(roundf(y))));
+		}
+		sample_coordinates.push_back(std::pair<int,int>(inX, inY));
+
+		// Extract all coordinates in a circle
+		float sigma = half_radius / 2.0f;
+		float norm = HexaMosaic::GaussDens(0.0f, 0.0f, sigma);
+		for (int y = -half_radius; y <= half_radius; y++)
+		{
+			for (int x = -half_radius; x <= half_radius; x++)
 			{
-				Uint8 r, g, b;
-				inImg.GetRgb(i+inX, j+inY, &r, &g, &b);
-				r_avg += WEIGHT_RED   * r;
-				g_avg += WEIGHT_GREEN * g;
-				b_avg += WEIGHT_BLUE  * b;
-				count++;
+				cFloat r = sqrtf(x*x + y*y);
+				if (r <= half_radius)
+				{
+					circle_coordinates.push_back(std::pair<int,int>(x,y));
+					weights.push_back(HexaMosaic::GaussDens(r, 0.0f, sigma)/norm);
+				}
 			}
 		}
+
+#ifdef DEBUG
+		Image sample(100,100);
+		vUint32 colors;
+		colors.push_back(0xFF0000);
+		colors.push_back(0x00FF00);
+		colors.push_back(0x0000FF);
+		colors.push_back(0xFF00FF);
+		colors.push_back(0x00FFFF);
+		colors.push_back(0xFFFF00);
+		colors.push_back(0xFFFFFF);
+		for (int k = 0, n = sample_coordinates.size(); k < n; k++)
+		{
+			cInt sample_x = sample_coordinates[k].first;
+			cInt sample_y = sample_coordinates[k].second;
+			for (int l = 0, m = circle_coordinates.size(); l < m; l++)
+			{
+				cInt circle_x = circle_coordinates[l].first;
+				cInt circle_y = circle_coordinates[l].second;
+				cInt x = sample_x + circle_x;
+				cInt y = sample_y + circle_y;
+				Uint8 r, g, b;
+				SDL_GetRGB(colors[k], sample.GetFormat(), &r, &g, &b);
+				r *= weights[l];
+				g *= weights[l];
+				b *= weights[l];
+				sample.PutPixel(x, y, r << 16 | g << 8 | b);
+			}
+		}
+		sample.Write("sample");
+#endif
 	}
-	r_avg /= count;
-	g_avg /= count;
-	b_avg /= count;
-	outData.push_back(r_avg);
-	outData.push_back(g_avg);
-	outData.push_back(b_avg);
+
+	// For each sample coordinate compute the average pixelcolor of a circle
+	Uint8 r, g, b;
+	float r_avg, g_avg, b_avg;
+	for (int k = 0, n = sample_coordinates.size(); k < n; k++)
+	{
+		r_avg = g_avg = b_avg = 0.0f;
+
+		cInt sample_x = sample_coordinates[k].first;
+		cInt sample_y = sample_coordinates[k].second;
+		for (int l = 0, m = circle_coordinates.size(); l < m; l++)
+		{
+			cInt x = sample_x + circle_coordinates[l].first;
+			cInt y = sample_y + circle_coordinates[l].second;
+			inImg.GetRgb(x, y, &r, &g, &b);
+			r_avg += weights[l] * r;
+			g_avg += weights[l] * g;
+			b_avg += weights[l] * b;
+		}
+
+		r_avg *= WEIGHT_RED;
+    	g_avg *= WEIGHT_GREEN;
+    	b_avg *= WEIGHT_BLUE;
+
+		r_avg /= circle_coordinates.size();
+		g_avg /= circle_coordinates.size();
+		b_avg /= circle_coordinates.size();
+
+		outData.push_back(r_avg);
+		outData.push_back(g_avg);
+		outData.push_back(b_avg);
+	}
+
+	return sample_coordinates.size() * 3;
 }
 
 int HexaMosaic::Split(rvString outSplit, rcString inString, char inChar) {
@@ -214,4 +290,10 @@ int HexaMosaic::Split(rvString outSplit, rcString inString, char inChar) {
 	}
 	ASSERT(outSplit.size() == 4);
 	return outSplit.size();
+}
+
+float HexaMosaic::GaussDens(cFloat x, cFloat mu, cFloat sigma) {
+	cFloat a = 1.0f / (sigma * std::sqrt(2.0f * M_PI));
+	cFloat b = std::exp(-(((x - mu) * (x - mu)) / (2.0f * sigma * sigma)));
+	return (a * b);
 }

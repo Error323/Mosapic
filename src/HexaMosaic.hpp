@@ -25,7 +25,7 @@ public:
 		cFloat inRadius
 	);
 
-	static void ExtractInfo(
+	static int ExtractInfo(
 		rImage inImg, 
 		cInt inX, 
 		cInt inY, 
@@ -59,6 +59,8 @@ private:
 	);
 
 	int Split(rvString v, rcString str, char c);
+
+	static float GaussDens(cFloat inX, cFloat inMu, cFloat inSigma);
 };
 
 #endif // HEXAMOSAIC_HDR
