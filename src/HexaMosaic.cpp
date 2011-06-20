@@ -66,6 +66,7 @@ void HexaMosaic::Create() {
 	vFloat src_data;
 	vFloat db_data;
 
+	// Load database
 	std::ifstream data((mDatabase + "/database.dat").c_str(), std::ios::in);
 	String line;
 	vString record;
@@ -81,6 +82,7 @@ void HexaMosaic::Create() {
 		record_count++;
 	}
 
+	// Shuffle input coordinates
 	std::vector<std::pair<int,int> > coords;
 	for (int j = 0; j < mHeight; j++)
 		for (int i = 0; i < mWidth; i++)
@@ -88,6 +90,7 @@ void HexaMosaic::Create() {
 	
 	random_shuffle(coords.begin(), coords.end());
 
+	// Construct hexa picture
 	Image tile_img;
 	vInt ids;
 	int percentage_done = 0;
@@ -185,7 +188,9 @@ int HexaMosaic::ExtractInfo(rImage inImg, cInt inX, cInt inY, cFloat inRadius, r
 			y = half_radius*cosf(theta);
 			sample_coordinates.push_back(std::pair<int,int>(int(roundf(x)), int(roundf(y))));
 		}
-		sample_coordinates.push_back(std::pair<int,int>(inX, inY));
+
+		// Extract center coordinate
+		sample_coordinates.push_back(std::pair<int,int>(0, 0));
 
 		// Extract all coordinates in a circle
 		float sigma = half_radius / 2.0f;
