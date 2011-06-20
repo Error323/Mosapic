@@ -70,16 +70,17 @@ void HexaMosaic::Create() {
 	String line;
 	vString record;
 	int record_count = 0;
-	while(!std::getline(data, line).eof()) {
+	while(!std::getline(data, line).eof()) 
+	{
 		Split(record, line, ',');
-		for (unsigned int i = 1; i < record.size(); i++) {
+		ASSERT(record.size() == 22);
+		for (unsigned int i = 1; i < record.size(); i++) 
 			db_data.push_back(atof(record[i].c_str()));
-		}
+
+		record.clear();
 		record_count++;
 	}
 
-	Image tile_img;
-	vInt ids;
 	std::vector<std::pair<int,int> > coords;
 	for (int j = 0; j < mHeight; j++)
 		for (int i = 0; i < mWidth; i++)
@@ -87,6 +88,8 @@ void HexaMosaic::Create() {
 	
 	random_shuffle(coords.begin(), coords.end());
 
+	Image tile_img;
+	vInt ids;
 	int percentage_done = 0;
 	for (int k = 0, n = coords.size(); k < n; k++)
 	{
@@ -106,21 +109,19 @@ void HexaMosaic::Create() {
 			float dist = 0.0f;
 			for (int dim = 0; dim < dimensions; dim++)
 			{
-				dist += powf(db_data[img_id*dimensions+dim] - src_data[dim], 2.0f);
+				dist += fabs(db_data[img_id*dimensions+dim] - src_data[dim]);
 			}
-			KNN.push(Match(img_id, sqrtf(dist)));
+			KNN.push(Match(img_id, dist));
 		}
 
 		// Make sure we never use the same image twice
 		std::stringstream s;
 		int best_id = KNN.top().id;
-		/*
 		while (!KNN.empty() && find(ids.begin(), ids.end(), best_id) != ids.end())
 		{
 			KNN.pop();
 			best_id = KNN.top().id;
 		}
-		*/
 		ids.push_back(best_id);
 		s << best_id;
 		tile_img.Read(mDatabase + "/" + s.str() + ".bmp");
@@ -180,8 +181,8 @@ int HexaMosaic::ExtractInfo(rImage inImg, cInt inX, cInt inY, cFloat inRadius, r
 		for (int i = 0; i < 6; i++)
 		{
 			theta += M_PI / 3.0f;
-			x = inX + half_radius*sinf(theta);
-			y = inY + half_radius*cosf(theta);
+			x = half_radius*sinf(theta);
+			y = half_radius*cosf(theta);
 			sample_coordinates.push_back(std::pair<int,int>(int(roundf(x)), int(roundf(y))));
 		}
 		sample_coordinates.push_back(std::pair<int,int>(inX, inY));
@@ -220,8 +221,8 @@ int HexaMosaic::ExtractInfo(rImage inImg, cInt inX, cInt inY, cFloat inRadius, r
 			{
 				cInt circle_x = circle_coordinates[l].first;
 				cInt circle_y = circle_coordinates[l].second;
-				cInt x = sample_x + circle_x;
-				cInt y = sample_y + circle_y;
+				cInt x = sample_x + circle_x + inRadius;
+				cInt y = sample_y + circle_y + inRadius;
 				Uint8 r, g, b;
 				SDL_GetRGB(colors[k], sample.GetFormat(), &r, &g, &b);
 				r *= weights[l];
@@ -245,8 +246,8 @@ int HexaMosaic::ExtractInfo(rImage inImg, cInt inX, cInt inY, cFloat inRadius, r
 		cInt sample_y = sample_coordinates[k].second;
 		for (int l = 0, m = circle_coordinates.size(); l < m; l++)
 		{
-			cInt x = sample_x + circle_coordinates[l].first;
-			cInt y = sample_y + circle_coordinates[l].second;
+			cInt x = sample_x + circle_coordinates[l].first  + inX;
+			cInt y = sample_y + circle_coordinates[l].second + inY;
 			inImg.GetRgb(x, y, &r, &g, &b);
 			r_avg += weights[l] * r;
 			g_avg += weights[l] * g;
@@ -288,7 +289,6 @@ int HexaMosaic::Split(rvString outSplit, rcString inString, char inChar) {
 				break;
 		}
 	}
-	ASSERT(outSplit.size() == 4);
 	return outSplit.size();
 }
 
