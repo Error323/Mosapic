@@ -37,34 +37,33 @@ Uint32 Image::GetPixel(cInt inX, cInt inY) {
 	if (inX < 0 || inX >= Width() || inY < 0 || inY >= Height())
 		return 0;
 
-    int bpp = mSurface->format->BytesPerPixel;
-    /* Here p is the address to the pixel we want to retrieve */
-    pUint8 p = (pUint8)mSurface->pixels + inY * mSurface->pitch + inX * bpp;
+	int bpp = mSurface->format->BytesPerPixel;
+	/* Here p is the address to the pixel we want to retrieve */
+	Uint8 *p = (Uint8 *)mSurface->pixels + inY * mSurface->pitch + inX * bpp;
 
-    switch(bpp) {
-		case 1: {
-			return *p;
-		}
-		case 2: {
-			return *(pUint16)p;
-		}
-		case 3: {
-			if (SDL_BYTEORDER == SDL_BIG_ENDIAN)
-				return p[0] << 16 | p[1] << 8 | p[2];
-			else
-				return p[0] | p[1] << 8 | p[2] << 16;
-		}
-		case 4: {
-			return *(pUint32)p;
-		}
-		default: { 
-			ASSERT_MSG(false, "bpp = %d", bpp);
-			return 0;
-		}
-    }
+	switch(bpp) {
+	case 1:
+		return *p;
+
+	case 2:
+		return *(Uint16 *)p;
+
+	case 3:
+		if(SDL_BYTEORDER == SDL_BIG_ENDIAN)
+			return p[0] << 16 | p[1] << 8 | p[2];
+		else
+			return p[0] | p[1] << 8 | p[2] << 16;
+
+	case 4:
+		return *(Uint32 *)p;
+
+	default:
+		return 0;	   /* shouldn't happen, but avoids warnings */
+	}
 }
 
 pSDL_PixelFormat Image::GetFormat() {
+	ASSERT(mSurface != NULL);
 	return mSurface->format;
 }
 
@@ -76,7 +75,7 @@ bool Image::Resize(cInt inSize) {
 
 	pSDL_Surface surface = SDL_CreateRGBSurface(SDL_SRCCOLORKEY, inSize, inSize, 24, 0, 0, 0, 0);
 	SDL_LockSurface(mSurface);
-
+	
 	cInt min = Width() < Height() ? Width() : Height();
 	cInt step_size = min / inSize;
 	cInt start_x = (Width() - min) / 2;
@@ -101,10 +100,9 @@ bool Image::Resize(cInt inSize) {
 }
 
 void Image::GetRgb(cInt inX, cInt inY, pUint8 r, pUint8 g, pUint8 b) {
+	ASSERT(mSurface != NULL);
 	cUint32 color = GetPixel(inX, inY);
-	*r = (color >> 16) & 0xFF;
-	*g = (color >> 8) & 0xFF;
-	*b = color & 0xFF;
+	SDL_GetRGB(color, mSurface->format, r, g, b);
 }
 
 Uint32 Image::Average(cInt inXStart, cInt inYStart, cInt inXEnd, cInt inYEnd) {
@@ -125,10 +123,7 @@ Uint32 Image::Average(cInt inXStart, cInt inYStart, cInt inXEnd, cInt inYEnd) {
 	Uint8 g = g_sum/i;
 	Uint8 b = b_sum/i;
 
-	if (SDL_BYTEORDER == SDL_BIG_ENDIAN)
-		return r << 16 | g << 8 | b;
-	else
-		return r | g << 8 | b << 16;
+	return r << 16 | g << 8 | b;
 }
 
 void Image::PutPixel(cInt inX, cInt inY, cUint32 inColor) {
@@ -140,40 +135,35 @@ void Image::PutPixel(pSDL_Surface inSurface, cInt inX, cInt inY, cUint32 inColor
 
 	if (inX < 0 || inX >= Width() || inY < 0 || inY >= Height())
 		return;
+	int bpp = inSurface->format->BytesPerPixel;
+	/* Here p is the address to the pixel we want to set */
+	Uint8 *p = (Uint8 *)inSurface->pixels + inY * inSurface->pitch + inX * bpp;
 
-    int bpp = inSurface->format->BytesPerPixel;
-    /* Here p is the address to the pixel we want to set */
-    Uint8 *p = (pUint8)inSurface->pixels + inY * inSurface->pitch + inX * bpp;
+	switch(bpp) {
+	case 1:
+		*p = inColor;
+		break;
 
-    switch(bpp) {
-		case 1: {
-			*p = inColor;
-			break;
+	case 2:
+		*(Uint16 *)p = inColor;
+		break;
+
+	case 3:
+		if(SDL_BYTEORDER == SDL_BIG_ENDIAN) {
+			p[0] = (inColor >> 16) & 0xff;
+			p[1] = (inColor >> 8) & 0xff;
+			p[2] = inColor & 0xff;
+		} else {
+			p[0] = inColor & 0xff;
+			p[1] = (inColor >> 8) & 0xff;
+			p[2] = (inColor >> 16) & 0xff;
 		}
-		case 2: {
-			*(pUint16)p = inColor;
-			break;
-		}
-		case 3: {
-			if (SDL_BYTEORDER == SDL_BIG_ENDIAN)
-			{
-				p[0] = (inColor >> 16) & 0xFF;
-				p[1] = (inColor >> 8) & 0xFF;
-				p[2] = inColor & 0xFF;
-			}
-			else
-			{
-				p[0] = inColor & 0xFF;
-				p[1] = (inColor >> 8) & 0xFF;
-				p[2] = (inColor >> 16) & 0xFF;
-			}
-			break;
-		}
-		case 4: {
-			*(pUint32)p = inColor;
-			break;
-		}
-    }
+		break;
+
+	case 4:
+		*(Uint32 *)p = inColor;
+		break;
+	}
 }
 
 int Image::Width() { 

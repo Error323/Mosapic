@@ -66,7 +66,7 @@ void HexaMosaic::Create() {
 	vFloat src_data;
 	vFloat db_data;
 
-	std::ifstream data("data/database.dat", std::ios::in);
+	std::ifstream data((mDatabase + "/database.dat").c_str(), std::ios::in);
 	String line;
 	vString record;
 	int record_count = 0;
@@ -87,7 +87,8 @@ void HexaMosaic::Create() {
 	
 	random_shuffle(coords.begin(), coords.end());
 
-	for (size_t k = 0; k < coords.size(); k++)
+	int percentage_done = 0;
+	for (int k = 0, n = coords.size(); k < n; k++)
 	{
 		int i = coords[k].first;
 		int j = coords[k].second;
@@ -97,6 +98,7 @@ void HexaMosaic::Create() {
 		cFloat dst_x = unit_dx * radius * (i + 0.5f + ((j % 2) / 2.0f));
 		src_data.clear();
 		HexaMosaic::ExtractInfo(src_img, src_x, src_y, radius, src_data);
+
 		// match with database
 		std::priority_queue<Match> KNN; // All nearest neighbours
 		for (int img_id = 0; img_id < record_count; img_id++)
@@ -104,23 +106,31 @@ void HexaMosaic::Create() {
 			float dist = 0.0f;
 			for (int dim = 0; dim < 3; dim++)
 			{
-				dist += fabs(db_data[img_id*3+dim] - src_data[dim]);
+				dist += powf(db_data[img_id*3+dim] - src_data[dim], 2.0f);
 			}
-			KNN.push(Match(img_id, dist));
+			KNN.push(Match(img_id, sqrtf(dist)));
 		}
 
 		// Make sure we never use the same image twice
 		std::stringstream s;
 		int best_id = KNN.top().id;
+		/*
 		while (!KNN.empty() && find(ids.begin(), ids.end(), best_id) != ids.end())
 		{
 			KNN.pop();
 			best_id = KNN.top().id;
 		}
+		*/
 		ids.push_back(best_id);
 		s << best_id;
-		tile_img.Read(std::string("data/") + s.str() + ".bmp");
+		tile_img.Read(mDatabase + "/" + s.str() + ".bmp");
 		FillHexagon(tile_img, dst_img, dst_x, dst_y, radius);
+		int percentage = floorf((k/float(n))*100.0f);
+		if (percentage > percentage_done)
+		{
+			percentage_done = percentage;
+			printf("%05d/%05d %d%%\n", k, n, percentage_done);
+		}
 	}
 
 	dst_img.Write(mDestImage);
@@ -167,13 +177,10 @@ void HexaMosaic::ExtractInfo(rImage inImg, cInt inX, cInt inY, cFloat inRadius, 
 			if (HexaMosaic::InHexagon(i, j, radius))
 			{
 				Uint8 r, g, b;
-				if (SDL_BYTEORDER == SDL_BIG_ENDIAN)
-					inImg.GetRgb(i+inX, j+inY, &r, &g, &b);
-				else
-					inImg.GetRgb(i+inX, j+inY, &b, &g, &r);
-				r_avg += WEIGHT_RED * r;
+				inImg.GetRgb(i+inX, j+inY, &r, &g, &b);
+				r_avg += WEIGHT_RED   * r;
 				g_avg += WEIGHT_GREEN * g;
-				b_avg += WEIGHT_BLUE * b;
+				b_avg += WEIGHT_BLUE  * b;
 				count++;
 			}
 		}

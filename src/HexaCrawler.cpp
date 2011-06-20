@@ -18,7 +18,7 @@ void HexaCrawler::Crawl(rcString inSrcDir, rcString inDstDir) {
 
 void HexaCrawler::Crawl(const boost::filesystem::path &inPath) {
 	static boost::match_results<std::string::const_iterator> what;
-	static boost::regex img_ext(".*(jpg|JPG|jpeg|JPEG|png|PNG)");
+	static boost::regex img_ext(".*(bmp|BMP|jpg|JPG|jpeg|JPEG|png|PNG)");
 
 	boost::filesystem::directory_iterator n;
 	for (boost::filesystem::directory_iterator i(inPath); i != n; ++i) 
