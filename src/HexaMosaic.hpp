@@ -4,6 +4,8 @@
 #include <string>
 #include "Types.hpp"
 
+#define DATABASE_FILENAME "database.dat"
+
 DECLARE_CLASS(HexaMosaic);
 DECLARE_CLASS(Image);
 
@@ -58,9 +60,17 @@ private:
 		cFloat inRadius
 	);
 
-	int Split(rvString v, rcString str, char c);
+	int Split(
+		rvString outSplitted, 
+		rcString inString, 
+		char inSplitChar
+	);
 
-	static float GaussDens(cFloat inX, cFloat inMu, cFloat inSigma);
+	static float GaussDens(
+		cFloat inX, 
+		cFloat inMu, 
+		cFloat inSigma
+	);
 };
 
 #endif // HEXAMOSAIC_HDR

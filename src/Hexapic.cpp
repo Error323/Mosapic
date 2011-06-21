@@ -1,7 +1,5 @@
 #include <iostream>
 #include <string>
-#include <cstdlib>
-#include <sstream>
 #include <boost/program_options.hpp>
 
 #include "Types.hpp"
@@ -68,6 +66,8 @@ int main(int argc,char **argv) {
 	}
 	else
 	{
+		std::cout << HUMAN_NAME << std::endl;
+		std::cout << "Constructs a hexagonal mosaic from images." << std::endl;
 		std::cout << std::endl << generic << std::endl;
 		std::cout << std::endl << crawl << std::endl;
 		std::cout << std::endl << hexapic << std::endl;

@@ -13,7 +13,7 @@ void HexaCrawler::Crawl(rcString inSrcDir, rcString inDstDir) {
 	}
 	mDstDir = inDstDir;
 	Crawl(inSrcDir);
-	std::cout << "Processed " << mImgCount << " images." << std::endl;
+	std::cout << std::endl << "Successfully processed " << mImgCount << " images." << std::endl;
 }
 
 void HexaCrawler::Crawl(const boost::filesystem::path &inPath) {
@@ -26,16 +26,12 @@ void HexaCrawler::Crawl(const boost::filesystem::path &inPath) {
 		try
 		{
 			if (boost::filesystem::is_directory(i->status()))
-			{
 				Crawl(i->path());
-			}
 			else 
 			if (boost::filesystem::is_regular_file(i->status()))
 			{
 				if (boost::regex_match(i->path().leaf(), what, img_ext, boost::match_default))
-				{
 					Process(i->path().string());
-				}
 			}
 		}
 		catch (const std::exception &ex)
@@ -64,7 +60,7 @@ void HexaCrawler::Process(rcString inImgName) {
 	HexaMosaic::ExtractInfo(img, 50, 50, 50, data);
 	
 	// Store image info into database
-	mDatabase.open((mDstDir + "/database.dat").c_str(), std::ios::app);
+	mDatabase.open((mDstDir + "/" +  DATABASE_FILENAME).c_str(), std::ios::app);
 	mDatabase << mImgCount;
 	for (size_t i = 0; i < data.size(); i++)
 		mDatabase << "," << data[i];

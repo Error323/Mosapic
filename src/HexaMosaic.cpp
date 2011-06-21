@@ -2,13 +2,15 @@
 
 #include "Debugger.hpp"
 #include "Image.hpp"
+
 #include <cmath>
-#include <SDL/SDL_image.h>
 #include <fstream>
 #include <queue>
 #include <algorithm>
 #include <sstream>
 #include <iostream>
+
+#include <SDL/SDL_image.h>
 
 #define WEIGHT_RED 0.299f
 #define WEIGHT_GREEN 0.587f
@@ -67,7 +69,7 @@ void HexaMosaic::Create() {
 	vFloat db_data;
 
 	// Load database
-	std::ifstream data((mDatabase + "/database.dat").c_str(), std::ios::in);
+	std::ifstream data((mDatabase + "/" + DATABASE_FILENAME).c_str(), std::ios::in);
 	String line;
 	vString record;
 	int record_count = 0;
@@ -275,13 +277,13 @@ int HexaMosaic::ExtractInfo(rImage inImg, cInt inX, cInt inY, cFloat inRadius, r
 	return sample_coordinates.size() * 3;
 }
 
-int HexaMosaic::Split(rvString outSplit, rcString inString, char inChar) {
-	outSplit.clear();
+int HexaMosaic::Split(rvString outSplit, rcString inString, char inSplitChar) {
 	std::string::const_iterator s = inString.begin();
-	while (true) {
+	while (true) 
+	{
 		std::string::const_iterator begin = s;
 
-		while (*s != inChar && s != inString.end())
+		while (*s != inSplitChar && s != inString.end())
 			++s;
 
 		outSplit.push_back(std::string(begin, s));
@@ -289,7 +291,8 @@ int HexaMosaic::Split(rvString outSplit, rcString inString, char inChar) {
 		if (s == inString.end())
 				break;
 
-		if (++s == inString.end()) {
+		if (++s == inString.end()) 
+		{
 				outSplit.push_back("");
 				break;
 		}
@@ -297,8 +300,8 @@ int HexaMosaic::Split(rvString outSplit, rcString inString, char inChar) {
 	return outSplit.size();
 }
 
-float HexaMosaic::GaussDens(cFloat x, cFloat mu, cFloat sigma) {
-	cFloat a = 1.0f / (sigma * std::sqrt(2.0f * M_PI));
-	cFloat b = std::exp(-(((x - mu) * (x - mu)) / (2.0f * sigma * sigma)));
+float HexaMosaic::GaussDens(cFloat inX, cFloat inMu, cFloat inSigma) {
+	cFloat a = 1.0f / (inSigma * sqrtf(2.0f * M_PI));
+	cFloat b = expf(-(((inX - inMu) * (inX - inMu)) / (2.0f * inSigma * inSigma)));
 	return (a * b);
 }

@@ -1,8 +1,9 @@
 #include "Image.hpp"
 #include "Debugger.hpp"
 
-#include <iostream>
 #include <cmath>
+#include <iostream>
+
 #include <SDL/SDL_image.h>
 
 Image::Image() {
@@ -149,11 +150,14 @@ void Image::PutPixel(pSDL_Surface inSurface, cInt inX, cInt inY, cUint32 inColor
 		break;
 
 	case 3:
-		if(SDL_BYTEORDER == SDL_BIG_ENDIAN) {
+		if(SDL_BYTEORDER == SDL_BIG_ENDIAN) 
+		{
 			p[0] = (inColor >> 16) & 0xff;
 			p[1] = (inColor >> 8) & 0xff;
 			p[2] = inColor & 0xff;
-		} else {
+		}
+		else 
+		{
 			p[0] = inColor & 0xff;
 			p[1] = (inColor >> 8) & 0xff;
 			p[2] = (inColor >> 16) & 0xff;
