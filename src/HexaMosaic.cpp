@@ -135,7 +135,7 @@ void HexaMosaic::Create() {
 		if (percentage > percentage_done)
 		{
 			percentage_done = percentage;
-			printf("%05d/%05d %d%%\n", k, n, percentage_done);
+			std::cout << k << "/" << n << "\t" << percentage_done << "%" << std::endl;
 		}
 	}
 
@@ -210,7 +210,7 @@ int HexaMosaic::ExtractInfo(rImage inImg, cInt inX, cInt inY, cFloat inRadius, r
 			}
 		}
 
-#ifdef DEBUG
+		#ifdef DEBUG
 		Image sample(100,100);
 		vUint32 colors;
 		colors.push_back(0xFF0000);
@@ -239,7 +239,7 @@ int HexaMosaic::ExtractInfo(rImage inImg, cInt inX, cInt inY, cFloat inRadius, r
 			}
 		}
 		sample.Write("sample");
-#endif
+		#endif
 	}
 
 	// For each sample coordinate compute the average pixelcolor of a circle
@@ -262,8 +262,8 @@ int HexaMosaic::ExtractInfo(rImage inImg, cInt inX, cInt inY, cFloat inRadius, r
 		}
 
 		r_avg *= WEIGHT_RED;
-    	g_avg *= WEIGHT_GREEN;
-    	b_avg *= WEIGHT_BLUE;
+		g_avg *= WEIGHT_GREEN;
+		b_avg *= WEIGHT_BLUE;
 
 		r_avg /= circle_coordinates.size();
 		g_avg /= circle_coordinates.size();
@@ -289,12 +289,12 @@ int HexaMosaic::Split(rvString outSplit, rcString inString, char inSplitChar) {
 		outSplit.push_back(std::string(begin, s));
 
 		if (s == inString.end())
-				break;
+			break;
 
 		if (++s == inString.end()) 
 		{
-				outSplit.push_back("");
-				break;
+			outSplit.push_back("");
+			break;
 		}
 	}
 	return outSplit.size();
