@@ -1,4 +1,4 @@
-PROJECT(hexapic)
+PROJECT(HEXAPIC)
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
 #-------------------------------------------------------------------------------
@@ -29,8 +29,8 @@ ELSE(NOT GIT_VERSION)
 ENDIF(GIT_VERSION)
 
 CONFIGURE_FILE(
-	"${hexapic_SOURCE_DIR}/cmake/Version.hpp.in"
-	"${hexapic_BINARY_DIR}/Version.hpp"
+	"${HEXAPIC_SOURCE_DIR}/cmake/Version.hpp.in"
+	"${HEXAPIC_BINARY_DIR}/Version.hpp"
 )
 
 
@@ -38,7 +38,7 @@ CONFIGURE_FILE(
 # Include sources
 #-------------------------------------------------------------------------------
 INCLUDE(cmake/sources.list)
-INCLUDE_DIRECTORIES(${hexapic_BINARY_DIR})
+INCLUDE_DIRECTORIES(${HEXAPIC_BINARY_DIR})
 
 
 #-------------------------------------------------------------------------------
@@ -46,7 +46,7 @@ INCLUDE_DIRECTORIES(${hexapic_BINARY_DIR})
 #-------------------------------------------------------------------------------
 FIND_PACKAGE(SDL REQUIRED)
 FIND_PACKAGE(SDL_image REQUIRED)
-FIND_PACKAGE(Boost COMPONENTS filesystem regex REQUIRED)
+FIND_PACKAGE(Boost COMPONENTS filesystem regex program_options REQUIRED)
 
 INCLUDE_DIRECTORIES(
 	${Boost_INCLUDE_DIRS}
@@ -57,7 +57,7 @@ INCLUDE_DIRECTORIES(
 #-------------------------------------------------------------------------------
 # Define executable and link libraries
 #-------------------------------------------------------------------------------
-ADD_EXECUTABLE(hexapic ${hexapic_SOURCE})
+ADD_EXECUTABLE(hexapic ${HEXAPIC_SOURCE})
 
 TARGET_LINK_LIBRARIES(hexapic
 	${Boost_LIBRARIES}
