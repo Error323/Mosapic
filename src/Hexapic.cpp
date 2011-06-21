@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <boost/program_options.hpp>
+#include <boost/filesystem.hpp>
 
 #include "Types.hpp"
 #include "Version.hpp"
@@ -27,8 +28,8 @@ int main(int argc,char **argv) {
 		("input-image", po::value<String>(), "source image")
 		("output-image", po::value<String>(), "output image")
 		("database", po::value<String>(), "database directory")
-		("width", po::value<String>(), "width in tile size")
-		("height", po::value<String>(), "height in tile size")
+		("width", po::value<int>(), "width in tile size")
+		("height", po::value<int>(), "height in tile size")
 	;
 
 	po::options_description cmdline_options;
@@ -45,8 +46,14 @@ int main(int argc,char **argv) {
 	else
 	if (vm.count("image-dir") && vm.count("output-dir"))
 	{
-		cString image_dir = vm["image-dir"].as<String>();
-		cString output_dir   = vm["output-dir"].as<String>();
+		cString image_dir  = vm["image-dir"].as<String>();
+		cString output_dir = vm["output-dir"].as<String>();
+
+		if (!boost::filesystem::exists(image_dir))
+		{
+			std::cerr << "Image directory doesn't exist." << std::endl;
+			return 1;
+		}
 
 		HexaCrawler hc;
 		hc.Crawl(image_dir, output_dir);
@@ -60,6 +67,18 @@ int main(int argc,char **argv) {
 		cString database     = vm["database"].as<String>();
 		cInt width           = vm["width"].as<int>();
 		cInt height          = vm["height"].as<int>();
+
+		if (!boost::filesystem::exists(input_image))
+		{
+			std::cerr << "Source image doesn't exist." << std::endl;
+			return 1;
+		}
+
+		if (!boost::filesystem::exists(database + "/" + DATABASE_FILENAME))
+		{
+			std::cerr << "Database doesn't exist." << std::endl;
+			return 1;
+		}
 
 		HexaMosaic hm(input_image, output_image, database, width, height);
 		hm.Create();

@@ -135,7 +135,7 @@ void HexaMosaic::Create() {
 		if (percentage > percentage_done)
 		{
 			percentage_done = percentage;
-			std::cout << k << "/" << n << "\t" << percentage_done << "%" << std::endl;
+			std::cout << k << "/" << n << " " << percentage_done << "%" << std::endl;
 		}
 	}
 
