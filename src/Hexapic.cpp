@@ -49,12 +49,6 @@ int main(int argc,char **argv) {
 		cString image_dir  = vm["image-dir"].as<String>();
 		cString output_dir = vm["output-dir"].as<String>();
 
-		if (!boost::filesystem::exists(image_dir))
-		{
-			std::cerr << "Image directory doesn't exist." << std::endl;
-			return 1;
-		}
-
 		HexaCrawler hc;
 		hc.Crawl(image_dir, output_dir);
 	}
@@ -67,18 +61,6 @@ int main(int argc,char **argv) {
 		cString database     = vm["database"].as<String>();
 		cInt width           = vm["width"].as<int>();
 		cInt height          = vm["height"].as<int>();
-
-		if (!boost::filesystem::exists(input_image))
-		{
-			std::cerr << "Source image doesn't exist." << std::endl;
-			return 1;
-		}
-
-		if (!boost::filesystem::exists(database + "/" + DATABASE_FILENAME))
-		{
-			std::cerr << "Database doesn't exist." << std::endl;
-			return 1;
-		}
 
 		HexaMosaic hm(input_image, output_image, database, width, height);
 		hm.Create();

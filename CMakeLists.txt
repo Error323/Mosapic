@@ -44,13 +44,12 @@ INCLUDE_DIRECTORIES(${HEXAPIC_BINARY_DIR})
 #-------------------------------------------------------------------------------
 # Find 3rd party libraries and include their headers
 #-------------------------------------------------------------------------------
-FIND_PACKAGE(SDL REQUIRED)
-FIND_PACKAGE(SDL_image REQUIRED)
 FIND_PACKAGE(Boost COMPONENTS filesystem regex program_options REQUIRED)
+FIND_PACKAGE(OpenCV REQUIRED)
 
 INCLUDE_DIRECTORIES(
 	${Boost_INCLUDE_DIRS}
-	${SDL_INCLUDE_DIR}
+	${OpenCV_INCLUDE_DIR}
 )
 
 
@@ -61,6 +60,5 @@ ADD_EXECUTABLE(hexapic ${HEXAPIC_SOURCE})
 
 TARGET_LINK_LIBRARIES(hexapic
 	${Boost_LIBRARIES}
-	${SDL_LIBRARY}
-	${SDLIMAGE_LIBRARY}
+	${OpenCV_LIBS}
 )

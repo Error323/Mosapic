@@ -2,6 +2,7 @@
 #define HEXAMOSAIC_HDR
 
 #include <string>
+#include <opencv2/opencv.hpp>
 #include "Types.hpp"
 
 #define DATABASE_FILENAME "database.dat"
@@ -20,21 +21,12 @@ public:
 	);
 
 	void Create();
-	
-	static bool InHexagon(
-		cFloat inX, 
-		cFloat inY, 
-		cFloat inRadius
-	);
-
-	static int ExtractInfo(
-		rImage inImg, 
-		cInt inX, 
-		cInt inY, 
-		cFloat inRadius, 
+	static void PrincipalComponents(
+		const cv::Mat& inImg,
+		const int inDimensions,
 		rvFloat outData
 	);
-
+	
 private:
 	struct Match {
 		Match(): id(-1), val(-1.0f) {}
@@ -52,24 +44,10 @@ private:
 	int mWidth;
 	int mHeight;
 
-	void FillHexagon(
-		rImage inImgSrc, 
-		rImage inImgDst, 
-		cFloat inX, 
-		cFloat inY, 
-		cFloat inRadius
-	);
-
 	int Split(
 		rvString outSplitted, 
 		rcString inString, 
 		char inSplitChar
-	);
-
-	static float GaussDens(
-		cFloat inX, 
-		cFloat inMu, 
-		cFloat inSigma
 	);
 };
 
