@@ -57,8 +57,14 @@ INCLUDE_DIRECTORIES(
 # Define executable and link libraries
 #-------------------------------------------------------------------------------
 ADD_EXECUTABLE(hexapic ${HEXAPIC_SOURCE})
+ADD_EXECUTABLE(pca ${HEXAPIC_SOURCE_DIR}/src/pca.cpp)
 
 TARGET_LINK_LIBRARIES(hexapic
+	${Boost_LIBRARIES}
+	${OpenCV_LIBS}
+)
+
+TARGET_LINK_LIBRARIES(pca
 	${Boost_LIBRARIES}
 	${OpenCV_LIBS}
 )
