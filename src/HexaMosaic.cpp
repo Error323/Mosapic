@@ -23,15 +23,52 @@ HexaMosaic::HexaMosaic(
 }
 
 void HexaMosaic::Create() {
-	cv::Mat src_img = cv::imread(mSourceImage, 1);
-	cv::Mat dst_img(mHeight*100, mWidth*100, CV_8UC3);
-	cv::Mat stitched_img(mHeight*100, mWidth*100, CV_8UC3);
-	cInt scale_x = (src_img.cols-100) / mWidth;
-	cInt scale_y = (src_img.rows-100) / mHeight;
+	cv::Mat raw_data;
+	int num_files = 0, num_images = 0, rows = 0, tile_size = 0;
 
 	// Load database
+	cv::FileStorage fs(mDatabase + "/rawdata.yml", cv::FileStorage::READ);
+	fs["num_files"] >> num_files;
+	fs["num_images"] >> num_images;
+	fs["tile_size"] >> tile_size;
+	fs.release();
 
+	cv::Mat tmp, roi;
+	int current_row = 0;
+	raw_data.create(num_images, tile_size*tile_size*3, CV_8UC1);
+	for (int i = 0; i < num_files; i++)
+	{
+		std::stringstream s;
+		s << i;
+		std::string entry = mDatabase + "/rawdata_" + s.str() + ".yml";
+		std::cout << "Loading `" << entry << "'..." << std::flush;
+		fs.open(entry, cv::FileStorage::READ);
+		rows = 0;
+		fs["rows"] >> rows;
+		for (int j = 0; j < rows; j++)
+		{
+			std::stringstream ss;
+			ss << j;
+			fs["img_" + ss.str()] >> tmp;
+			roi = raw_data.row(current_row);
+			tmp.copyTo(roi);
+			current_row++;
+		}
+		fs.release();
+		std::cout << "[done]" << std::endl;
+	}
 
+	// Compute pca components from source image
+	cv::Mat src_img = cv::imread(mSourceImage, 1);
+	for (int i = 0; i < mHeight; i++)
+	{
+		for (int j = 0; j < mWidth; j++)
+		{
+
+		}
+	}
+
+/*
 	vInt ids;
 	int percentage_done = 0;
 	for (int i = 0; i < mHeight; i++)
@@ -84,37 +121,5 @@ void HexaMosaic::Create() {
 	cv::Mat img_gray;
 	cv::cvtColor(dst_img, img_gray, CV_RGB2GRAY);
 	cv::imwrite("output_gray.jpg", img_gray);
-}
-
-
-void HexaMosaic::PrincipalComponents(const cv::Mat& inImg, const int inDimensions, rvFloat outData) {
-	cv::Mat img_gray;
-	cv::cvtColor(inImg, img_gray, CV_RGB2GRAY);
-	cv::PCA pca(img_gray, cv::Mat(), CV_PCA_DATA_AS_ROW, inDimensions);
-	for (int i = 0; i < pca.eigenvalues.rows; i++)
-		outData.push_back(pca.eigenvalues.at<float>(0,i));
-}
-
-
-int HexaMosaic::Split(rvString outSplit, rcString inString, char inSplitChar) {
-	std::string::const_iterator s = inString.begin();
-	while (true)
-	{
-		std::string::const_iterator begin = s;
-
-		while (*s != inSplitChar && s != inString.end())
-			++s;
-
-		outSplit.push_back(std::string(begin, s));
-
-		if (s == inString.end())
-			break;
-
-		if (++s == inString.end())
-		{
-			outSplit.push_back("");
-			break;
-		}
-	}
-	return outSplit.size();
+*/
 }

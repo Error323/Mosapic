@@ -5,8 +5,6 @@
 #include <opencv2/opencv.hpp>
 #include "Types.hpp"
 
-#define DATABASE_FILENAME "database.dat"
-
 DECLARE_CLASS(HexaMosaic);
 DECLARE_CLASS(Image);
 
@@ -21,11 +19,6 @@ public:
 		);
 
 	void Create();
-	static void PrincipalComponents(
-		const cv::Mat& inImg,
-		const int inDimensions,
-		rvFloat outData
-		);
 	
 private:
 	struct Match {
@@ -43,12 +36,6 @@ private:
 	String mDatabase;
 	int mWidth;
 	int mHeight;
-
-	int Split(
-		rvString outSplitted, 
-		rcString inString, 
-		char inSplitChar
-		);
 };
 
 #endif // HEXAMOSAIC_HDR

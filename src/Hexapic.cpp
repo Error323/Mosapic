@@ -11,6 +11,7 @@
 namespace po = boost::program_options;
 
 int main(int argc,char **argv) {
+	int tile_size;
 	po::options_description generic("Generic options");
 	generic.add_options()
 			("version,v", "print version string")
@@ -21,6 +22,7 @@ int main(int argc,char **argv) {
 	crawl.add_options()
 			("image-dir,i", po::value<String>(), "image directory")
 			("output-dir,o", po::value<String>(), "cache directory and database")
+			("tile-size,t", po::value<int>(&tile_size)->default_value(100), "tile size")
 			;
 
 	po::options_description hexapic("Hexapic options");
@@ -50,7 +52,7 @@ int main(int argc,char **argv) {
 			cString output_dir = vm["output-dir"].as<String>();
 
 			HexaCrawler hc;
-			hc.Crawl(image_dir, output_dir);
+			hc.Crawl(image_dir, output_dir, tile_size);
 		}
 		else
 			if (vm.count("input-image") && vm.count("output-image") &&

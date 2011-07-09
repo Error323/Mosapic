@@ -4,10 +4,10 @@
 #include <iostream>
 #include <sstream>
 
-#define TILE_SIZE 100
 #define ROWS_PER_FILE 1000
-void HexaCrawler::Crawl(rcString inSrcDir, rcString inDstDir) {
+void HexaCrawler::Crawl(rcString inSrcDir, rcString inDstDir, cInt inTileSize) {
 	mDstDir = inDstDir;
+	mTileSize = inTileSize;
 	if (!boost::filesystem::exists(inDstDir))
 	{
 		std::cout << "Directory `" << inDstDir << "' doesn't exist yet, creating..." << std::endl;
@@ -19,6 +19,7 @@ void HexaCrawler::Crawl(rcString inSrcDir, rcString inDstDir) {
 	fs.open(mDstDir + "/rawdata.yml", cv::FileStorage::WRITE);
 	fs << "num_files" << mFileCount;
 	fs << "num_images" << mImgCount;
+	fs << "tile_size" << mTileSize;
 	fs.release();
 	std::cout << std::endl << "Processed " << mImgCount << " images." << std::endl;
 	std::cout << std::endl << "Files " << mFileCount << "." << std::endl;
@@ -59,7 +60,7 @@ void HexaCrawler::OpenFS() {
 void HexaCrawler::CloseFS() {
 	int remaining_images = mImgCount % ROWS_PER_FILE;
 	fs << "rows" << ((remaining_images == 0) ? ROWS_PER_FILE : remaining_images);
-	fs << "cols" << TILE_SIZE*TILE_SIZE*3;
+	fs << "cols" << mTileSize*mTileSize*3;
 	fs << "file" << mFileCount;
 	fs.release();
 }
@@ -70,14 +71,14 @@ void HexaCrawler::Resize(cv::Mat& outImg) {
 	cv::Size size(min,min);
 	cv::Point2f center(outImg.cols/2.0f, outImg.rows/2.0f);
 	cv::getRectSubPix(outImg, size, center, img_tmp);
-	cv::resize(img_tmp, outImg, cv::Size(TILE_SIZE,TILE_SIZE));
+	cv::resize(img_tmp, outImg, cv::Size(mTileSize,mTileSize));
 }
 
 void HexaCrawler::Process(rcString inImgName) {
 	std::cout << "Processing `" << inImgName << "'..." << std::flush;
 
 	cv::Mat img_color = cv::imread(inImgName, 1);
-	if (img_color.data == NULL || img_color.rows < TILE_SIZE || img_color.cols < TILE_SIZE)
+	if (img_color.data == NULL || img_color.rows < mTileSize || img_color.cols < mTileSize)
 	{
 		std::cout << "[failed]" << std::endl;
 		return;

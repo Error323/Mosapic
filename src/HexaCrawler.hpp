@@ -14,12 +14,13 @@ public:
 	HexaCrawler(): mImgCount(0), mFileCount(0) {}
 	~HexaCrawler() {}
 
-	void Crawl(rcString inSrcDir, rcString inDstDir);
+	void Crawl(rcString inSrcDir, rcString inDstDir, cInt inTileSize);
 	static void Resize(cv::Mat& outImg);
 
 private:
 	int mImgCount;
 	int mFileCount;
+	int mTileSize;
 	String mDstDir;
 	cv::FileStorage fs;
 
