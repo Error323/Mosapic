@@ -14,7 +14,7 @@ HexaMosaic::HexaMosaic(
 	rcString inDatabase,
 	cInt inWidth,
 	cInt inHeight
-):
+	):
 	mSourceImage(inSourceImage),
 	mDestImage(inDestImage),
 	mDatabase(inDatabase),
@@ -30,22 +30,7 @@ void HexaMosaic::Create() {
 	cInt scale_y = (src_img.rows-100) / mHeight;
 
 	// Load database
-	std::ifstream data((mDatabase + "/" + DATABASE_FILENAME).c_str(), std::ios::in);
-	String line;
-	vString record;
-	int record_count = 0;
-	cInt dimensions = 32;
-	vFloat db_data;
-	while(!std::getline(data, line).eof()) 
-	{
-		Split(record, line, ',');
-		ASSERT(record.size() == dimensions+1);
-		for (unsigned int i = 1; i < record.size(); i++) 
-			db_data.push_back(atof(record[i].c_str()));
 
-		record.clear();
-		record_count++;
-	}
 
 	vInt ids;
 	int percentage_done = 0;
@@ -69,7 +54,7 @@ void HexaMosaic::Create() {
 				}
 				KNN.push(Match(img_id, sqrtf(dist)));
 			}
-			
+
 			// Make sure we never use the same image twice
 			int best_id = KNN.top().id;
 			while (!KNN.empty() && find(ids.begin(), ids.end(), best_id) != ids.end())
@@ -113,7 +98,7 @@ void HexaMosaic::PrincipalComponents(const cv::Mat& inImg, const int inDimension
 
 int HexaMosaic::Split(rvString outSplit, rcString inString, char inSplitChar) {
 	std::string::const_iterator s = inString.begin();
-	while (true) 
+	while (true)
 	{
 		std::string::const_iterator begin = s;
 
@@ -125,7 +110,7 @@ int HexaMosaic::Split(rvString outSplit, rcString inString, char inSplitChar) {
 		if (s == inString.end())
 			break;
 
-		if (++s == inString.end()) 
+		if (++s == inString.end())
 		{
 			outSplit.push_back("");
 			break;

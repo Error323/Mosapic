@@ -18,14 +18,14 @@ public:
 		rcString inDatabase,
 		cInt inWidth,
 		cInt inHeight
-	);
+		);
 
 	void Create();
 	static void PrincipalComponents(
 		const cv::Mat& inImg,
 		const int inDimensions,
 		rvFloat outData
-	);
+		);
 	
 private:
 	struct Match {
@@ -48,7 +48,7 @@ private:
 		rvString outSplitted, 
 		rcString inString, 
 		char inSplitChar
-	);
+		);
 };
 
 #endif // HEXAMOSAIC_HDR

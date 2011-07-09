@@ -36,11 +36,11 @@ void HexaCrawler::Crawl(const boost::filesystem::path &inPath) {
 			if (boost::filesystem::is_directory(i->status()))
 				Crawl(i->path());
 			else 
-			if (boost::filesystem::is_regular_file(i->status()))
-			{
-				if (boost::regex_match(i->path().leaf(), what, img_ext, boost::match_default))
-					Process(i->path().string());
-			}
+				if (boost::filesystem::is_regular_file(i->status()))
+				{
+					if (boost::regex_match(i->path().leaf(), what, img_ext, boost::match_default))
+						Process(i->path().string());
+				}
 		}
 		catch (const std::exception &ex)
 		{
