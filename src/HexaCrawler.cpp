@@ -71,7 +71,7 @@ void HexaCrawler::Resize(cv::Mat& outImg) {
 	cv::Size size(min,min);
 	cv::Point2f center(outImg.cols/2.0f, outImg.rows/2.0f);
 	cv::getRectSubPix(outImg, size, center, img_tmp);
-	cv::resize(img_tmp, outImg, cv::Size(mTileSize,mTileSize));
+	cv::resize(img_tmp, outImg, cv::Size(mTileSize,mTileSize), 0.0, 0.0, CV_INTER_CUBIC);
 }
 
 void HexaCrawler::Process(rcString inImgName) {

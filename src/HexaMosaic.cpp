@@ -62,7 +62,7 @@ void HexaMosaic::Create() {
 	// Compute pca components from source image
 	cv::Mat src_img = cv::imread(mSourceImage, 1);
 	cv::Mat src_img_scaled, pca_data;
-	cv::resize(src_img, src_img_scaled, cv::Size(mWidth*tile_size, mHeight*tile_size));
+	cv::resize(src_img, src_img_scaled, cv::Size(mWidth*tile_size, mHeight*tile_size), 0.0, 0.0, CV_INTER_CUBIC);
 	pca_data.create(mHeight*mWidth, tile_size*tile_size*3, CV_8UC1);
 	cv::Rect roi_patch(0, 0, tile_size, tile_size);
 	cv::Mat src_patch;
@@ -125,6 +125,7 @@ void HexaMosaic::Create() {
 	// Construct mosaic
 	std::cout << "Construct mosaic..." << std::flush;
 	cv::Mat src_entry, tmp_entry, dst_patch;
+	vInt ids;
 	for (int i = 0; i < mHeight; i++)
 	{
 		roi_patch.y = i * tile_size;
@@ -132,50 +133,14 @@ void HexaMosaic::Create() {
 		{
 			roi_patch.x = j * tile_size;
 			src_entry = compressed_src_img.row(i*mWidth+j);
-			float best_dist = std::numeric_limits<float>::max();
+			// Match with database
+			std::priority_queue<Match> KNN; // All nearest neighbours
 			for (int k = 0; k < num_images; k++)
 			{
 				tmp_entry = compressed_database.row(k);
 				float dist = GetDistance(src_entry, tmp_entry);
-				if (dist < best_dist)
-				{
-					best_dist = dist;
-					dst_patch = database.row(k);
-				}
+				KNN.push(Match(k, dist));
 			}
-			src_patch = src_img_scaled(roi_patch);
-			dst_patch = dst_patch.reshape(3, tile_size);
-			dst_patch.copyTo(src_patch);
-		}
-	}
-	cv::imwrite(mDestImage, src_img_scaled);
-	std::cout << "[done]" << std::endl;
-
-/*
-	vInt ids;
-	int percentage_done = 0;
-	for (int i = 0; i < mHeight; i++)
-	{
-		for (int j = 0; j < mWidth; j++)
-		{
-			cv::Rect r(j*scale_x, i*scale_y, 100, 100);
-			cv::Mat roi = src_img(r);
-			vFloat src_data;
-			HexaMosaic::PrincipalComponents(roi, dimensions, src_data);
-
-			// match with database
-			std::priority_queue<Match> KNN; // All nearest neighbours
-			for (int img_id = 0; img_id < record_count; img_id++)
-			{
-				float dist = 0.0f;
-				for (int dim = 0; dim < dimensions; dim++)
-				{
-					dist += powf(db_data[img_id*32+dim] - src_data[dim], 2.0f);
-				}
-				KNN.push(Match(img_id, sqrtf(dist)));
-			}
-
-			// Make sure we never use the same image twice
 			int best_id = KNN.top().id;
 			while (!KNN.empty() && find(ids.begin(), ids.end(), best_id) != ids.end())
 			{
@@ -183,34 +148,20 @@ void HexaMosaic::Create() {
 				best_id = KNN.top().id;
 			}
 			ids.push_back(best_id);
-			std::stringstream s;
-			s << best_id;
-			cv::Mat tile_img = cv::imread(mDatabase + "/" + s.str() + ".jpg", 1);
-			cv::Rect r2(j*100, i*100, 100, 100);
-			cv::Mat roi3 = stitched_img(r2);
-			roi.copyTo(roi3);
-			cv::Mat roi2 = dst_img(r2);
-			tile_img.copyTo(roi2);
-			cInt percentage = roundf((ids.size()/float(mWidth*mHeight))*100);
-			if (percentage > percentage_done)
-			{
-				percentage_done = percentage;
-				std::cout << percentage_done << "%" << std::endl;
-			}
+			src_patch = src_img_scaled(roi_patch);
+			dst_patch = database.row(best_id);
+			dst_patch = dst_patch.reshape(3, tile_size);
+			dst_patch.copyTo(src_patch);
 		}
 	}
-	cv::imwrite("stitched.jpg", stitched_img);
-	cv::imwrite(mDestImage, dst_img);
-	cv::Mat img_gray;
-	cv::cvtColor(dst_img, img_gray, CV_RGB2GRAY);
-	cv::imwrite("output_gray.jpg", img_gray);
-*/
+	cv::imwrite(mDestImage, src_img_scaled);
+	std::cout << "[done]" << std::endl;
 }
 
-float HexaMosaic::GetDistance(const cv::Mat& a, const cv::Mat& b) {
+float HexaMosaic::GetDistance(const cv::Mat& inSrcRow, const cv::Mat& inDataRow) {
 	cv::Mat diff, square;
 	float sum, dist;
-	cv::subtract(a, b, diff);
+	cv::subtract(inSrcRow, inDataRow, diff);
 	cv::pow(diff, 2.0, square);
 	sum = cv::sum(square)[0];
 	dist = sqrt(sum);

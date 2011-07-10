@@ -30,7 +30,7 @@ private:
 		}
 	};
 
-	float GetDistance(const cv::Mat& a, const cv::Mat& b);
+	float GetDistance(const cv::Mat& inSrcRow, const cv::Mat& inDataRow);
 
 	String mSourceImage;
 	String mDestImage;
