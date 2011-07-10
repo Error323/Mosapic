@@ -31,8 +31,8 @@ HexaMosaic::HexaMosaic(
 
 void HexaMosaic::Create() {
 	// Load the database (raw images)
-	LoadDatabase(mDatabaseFileName + "/rawdata.yml", mDatabase);
-
+//	LoadDatabase(mDatabaseFileName + "/rawdata.yml", mDatabase);
+	mTileSize = 100;
 	// Randomize image coordinates, gives more natural result
 	std::vector<cv::Point2i> coordinates;
 	for (int y = 0; y < mHeight; y++)
@@ -42,64 +42,62 @@ void HexaMosaic::Create() {
 	// unit dimensions of hexagon facing upwards
 	cFloat unit_dx    = HEXAGON_WIDTH;
 	cFloat unit_dy    = 1.5f;
-	cFloat unit_ratio = unit_dx / unit_dy;
 	cFloat radius     = mTileSize / 2.0f;
-
-	// Load source image
-	cv::Mat src_img_org1 = cv::imread(mSourceImage, 1);
-	cv::Mat src_img_org;
-	cv::resize(src_img_org1, src_img_org, cv::Size(int(roundf(mWidth*radius*unit_dx)), int(roundf(mHeight*radius*unit_dy))));
-	cv::Mat src_img(mWidth*mTileSize, mHeight*mTileSize, src_img_org.type(), cv::Scalar(0));
-	cv::Mat roi = src_img(cv::Rect(0,0,src_img_org.cols, src_img_org.rows));
-	src_img_org.copyTo(roi);
-	cv::imwrite("src_img.jpg",src_img_org1);
-	cv::imwrite("src_img_resized.jpg",src_img_org);
 
 	// Precache hexagon coordinates
 	std::vector<cv::Point2i> hex_coords;
-	cv::Mat hex_mask(mTileSize, mTileSize, CV_8UC3, cv::Scalar(0));
-	cv::Mat hex_mask_src(mTileSize, mTileSize, CV_8UC3, cv::Scalar(0));
+	cv::Mat hex_mask(mTileSize-1, radius*unit_dx, CV_8UC1, cv::Scalar(0));
 	for (int j = -radius; j < radius; j++)
 	{
 		for (int i = roundf(-radius * HALF_HEXAGON_WIDTH); i < roundf(radius * HALF_HEXAGON_WIDTH); i++)
 		{
 			if (HexaMosaic::InHexagon(i, j, radius))
 			{
-				int offset = (mTileSize-(2.0f*radius*HALF_HEXAGON_WIDTH))/2.0f;
-				cInt x = i+(radius*HALF_HEXAGON_WIDTH) + offset;
-				cInt y = j+radius;
+				cInt x = i+(radius*HALF_HEXAGON_WIDTH);
+				cInt y = j+radius-1;
 				hex_coords.push_back(cv::Point2i(x,y));
 				hex_mask.at<Uint8>(y,x) = 255;
-				hex_mask_src.at<Uint8>(y,x-offset) = 255;
 			}
 		}
 	}
+	cv::imwrite("hexmask.jpg",hex_mask);
 
-	// Real ratios (from source image) of hexagon facing upwards
-	cFloat dst_ratio  = (mWidth * unit_dx) / (mHeight * unit_dy);
-	cFloat src_ratio  = (float(src_img_org.cols) / src_img_org.rows);
+	// Load source image
+	cv::Mat src_img = cv::imread(mSourceImage, 1);
+	cv::Mat src_img_scaled;
+	cv::resize(src_img,
+			   src_img_scaled,
+			   cv::Size(int(roundf(mWidth*radius*unit_dy)),
+						int(roundf(mHeight*radius*unit_dy))
+						)
+			   );
+	cv::Mat dst_img(int(roundf(mWidth*radius*unit_dy)),
+					int(roundf(mHeight*radius*unit_dy)),
+					CV_8UC3,
+					cv::Scalar(0,0,0)
+					);
 
-	// Source height is greater then destination height
-	float dx, dy, start_x, start_y;
-	if (src_ratio < dst_ratio)
+	// Compute pca input data from source image
+	cFloat dx = src_img_scaled.cols / float(mWidth);
+	cFloat dy = src_img_scaled.rows / float(mHeight);
+	for (int i = 0, n = coordinates.size(); i < n; i++)
 	{
-		dx = float(src_img_org.cols) / mWidth;
-		dy = dx / unit_ratio;
-		start_x = dx / 2.0f;
-		start_y = (src_img_org.rows - mHeight * dy) / 2.0f;
+		cInt x = coordinates[i].x;
+		cInt y = coordinates[i].y;
+		cInt src_y = (y * dy);
+		cInt src_x = (x * dx + ((y % 2) * (dx / 2.0f)));
+		cv::Rect roi(src_x, src_y, hex_mask.cols, hex_mask.rows);
+		if (roi.x+hex_mask.cols >= src_img_scaled.cols || roi.y+hex_mask.rows >= src_img_scaled.rows)
+			continue;
+		cv::Mat src_patch = src_img_scaled(roi);
+		cv::Mat dst_patch = dst_img(roi);
+		src_patch.copyTo(dst_patch, hex_mask);
 	}
-	// Source width is greater then destination width
-	else
-	{
-		dy = float(src_img_org.rows) / mHeight;
-		dx = dy * unit_ratio;
-		start_y = dy / 2.0f;
-		start_x = (src_img_org.cols - mWidth * dx) / 2.0f;
-	}
-
+	cv::imwrite("dst_img.jpg",dst_img);
+/*
 	// Precache destination image
-	cv::Mat dst_img(int(roundf(mWidth*mTileSize)),
-					int(roundf(mHeight*mTileSize)),
+	cv::Mat dst_img(int(roundf(mWidth*radius*unit_dx)),
+					int(roundf(mHeight*radius*unit_dx)),
 					CV_8UC3
 					);
 
@@ -212,6 +210,7 @@ void HexaMosaic::Create() {
 	cv::imwrite(s.str(), dst_img);
 	std::cout << "[done]" << std::endl;
 	std::cout << "Resulting image: " << s.str() << std::endl;
+	*/
 }
 
 void HexaMosaic::DataRow(cInt inX, cInt inY, const cv::Mat &inSrcImg, const cv::Mat &inMask, cv::Mat &outDataRow) {
