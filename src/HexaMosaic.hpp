@@ -31,6 +31,11 @@ private:
 		}
 	};
 
+	void LoadDatabase(
+		rcString inFileName,
+		cv::Mat& outDatabase
+		);
+
 	float GetDistance(
 		const cv::Mat& inSrcRow,
 		const cv::Mat& inDataRow
@@ -42,12 +47,31 @@ private:
 		cv::Mat& outCompressed
 		);
 
+	bool InHexagon(
+		cFloat inX,
+		cFloat inY,
+		cFloat inRadius
+		);
+
+	void DataRow(
+		cInt inX,
+		cInt inY,
+		const cv::Mat& inSrcImg,
+		const cv::Mat& inMask,
+		cv::Mat& outDataRow
+		);
+
 	String mSourceImage;
-	String mDatabase;
+	String mDatabaseFileName;
+
 	int mWidth;
 	int mHeight;
 	int mDimensions;
 	int mMaxRadius;
+	int mNumImages;
+	int mTileSize;
+
+	cv::Mat mDatabase;
 };
 
 #endif // HEXAMOSAIC_HDR
