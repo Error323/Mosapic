@@ -31,7 +31,7 @@ int main(int argc,char **argv) {
 			("database", po::value<String>(), "database directory")
 			("width", po::value<int>(), "width in tile size")
 			("height", po::value<int>(), "height in tile size")
-			("dimensions", po::value<int>(&dimensions)->default_value(16), "pca dimensions")
+			("dimensions", po::value<int>(&dimensions)->default_value(8), "pca dimensions")
 			("max-radius", po::value<int>(&max_radius)->default_value(5), "max radius between duplicates")
 			;
 
