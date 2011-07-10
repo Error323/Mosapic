@@ -6,7 +6,6 @@
 #include "Types.hpp"
 
 DECLARE_CLASS(HexaMosaic);
-DECLARE_CLASS(Image);
 
 class HexaMosaic {
 public:
@@ -30,6 +29,8 @@ private:
 			return val > m.val;
 		}
 	};
+
+	float GetDistance(const cv::Mat& a, const cv::Mat& b);
 
 	String mSourceImage;
 	String mDestImage;

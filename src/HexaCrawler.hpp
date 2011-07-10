@@ -15,7 +15,7 @@ public:
 	~HexaCrawler() {}
 
 	void Crawl(rcString inSrcDir, rcString inDstDir, cInt inTileSize);
-	static void Resize(cv::Mat& outImg);
+	void Resize(cv::Mat& outImg);
 
 private:
 	int mImgCount;
