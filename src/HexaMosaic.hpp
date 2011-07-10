@@ -11,10 +11,10 @@ class HexaMosaic {
 public:
 	HexaMosaic(
 		rcString inSourceImage,
-		rcString inDestImage,
 		rcString inDatabase,
 		cInt inWidth,
-		cInt inHeight
+		cInt inHeight,
+		cInt inDimensions
 		);
 
 	void Create();
@@ -33,10 +33,10 @@ private:
 	float GetDistance(const cv::Mat& inSrcRow, const cv::Mat& inDataRow);
 
 	String mSourceImage;
-	String mDestImage;
 	String mDatabase;
 	int mWidth;
 	int mHeight;
+	int mDimensions;
 };
 
 #endif // HEXAMOSAIC_HDR

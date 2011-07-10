@@ -11,7 +11,7 @@
 namespace po = boost::program_options;
 
 int main(int argc,char **argv) {
-	int tile_size;
+	int tile_size, dimensions;
 	po::options_description generic("Generic options");
 	generic.add_options()
 			("version,v", "print version string")
@@ -28,10 +28,10 @@ int main(int argc,char **argv) {
 	po::options_description hexapic("Hexapic options");
 	hexapic.add_options()
 			("input-image", po::value<String>(), "source image")
-			("output-image", po::value<String>(), "output image")
 			("database", po::value<String>(), "database directory")
 			("width", po::value<int>(), "width in tile size")
 			("height", po::value<int>(), "height in tile size")
+			("dimensions", po::value<int>(&dimensions)->default_value(16), "pca dimensions")
 			;
 
 	po::options_description cmdline_options;
@@ -55,16 +55,15 @@ int main(int argc,char **argv) {
 			hc.Crawl(image_dir, output_dir, tile_size);
 		}
 		else
-			if (vm.count("input-image") && vm.count("output-image") &&
-					vm.count("database") && vm.count("width") && vm.count("height"))
+			if (vm.count("input-image") && vm.count("database")
+					&& vm.count("width") && vm.count("height"))
 			{
 				cString input_image  = vm["input-image"].as<String>();
-				cString output_image = vm["output-image"].as<String>();
 				cString database     = vm["database"].as<String>();
 				cInt width           = vm["width"].as<int>();
 				cInt height          = vm["height"].as<int>();
 
-				HexaMosaic hm(input_image, output_image, database, width, height);
+				HexaMosaic hm(input_image, database, width, height, dimensions);
 				hm.Create();
 			}
 			else

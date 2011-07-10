@@ -11,16 +11,17 @@
 
 HexaMosaic::HexaMosaic(
 	rcString inSourceImage,
-	rcString inDestImage,
 	rcString inDatabase,
 	cInt inWidth,
-	cInt inHeight
+	cInt inHeight,
+	cInt inDimensions
 	):
 	mSourceImage(inSourceImage),
-	mDestImage(inDestImage),
 	mDatabase(inDatabase),
 	mWidth(inWidth),
-	mHeight(inHeight) {
+	mHeight(inHeight),
+	mDimensions(inDimensions)
+{
 }
 
 void HexaMosaic::Create() {
@@ -79,12 +80,11 @@ void HexaMosaic::Create() {
 		}
 	}
 
-	cInt dimensions = 8;
 	std::cout << "Performing pca..." << std::flush;
-	cv::PCA pca(pca_data, cv::Mat(), CV_PCA_DATA_AS_ROW, dimensions);
+	cv::PCA pca(pca_data, cv::Mat(), CV_PCA_DATA_AS_ROW, mDimensions);
 	#ifdef DEBUG
 	// Construct eigenvector images for debugging
-	for (int i = 0; i < dimensions; i++)
+	for (int i = 0; i < mDimensions; i++)
 	{
 		cv::Mat eigenvec;
 		cv::normalize(pca.eigenvectors.row(i), eigenvec, 255, 0, cv::NORM_MINMAX);
@@ -100,7 +100,7 @@ void HexaMosaic::Create() {
 	// Compress original image data
 	std::cout << "Compress source image..." << std::flush;
 	cv::Mat flat_img, compressed_src_img, compressed_entry;
-	compressed_src_img.create(mWidth*mHeight, dimensions, pca.eigenvectors.type());
+	compressed_src_img.create(mWidth*mHeight, mDimensions, pca.eigenvectors.type());
 	for (int i = 0; i < pca_data.rows; i++)
 	{
 		flat_img = pca_data.row(i);
@@ -113,7 +113,7 @@ void HexaMosaic::Create() {
 	// Compress database image data
 	std::cout << "Compress database..." << std::flush;
 	cv::Mat compressed_database;
-	compressed_database.create(num_images, dimensions, pca.eigenvectors.type());
+	compressed_database.create(num_images, mDimensions, pca.eigenvectors.type());
 	for (int i = 0; i < num_images; i++)
 	{
 		flat_img = database.row(i);
@@ -154,8 +154,11 @@ void HexaMosaic::Create() {
 			dst_patch.copyTo(src_patch);
 		}
 	}
-	cv::imwrite(mDestImage, src_img_scaled);
+	std::stringstream s;
+	s << "mosaic-pca" << mDimensions << "-tilesize" << tile_size << ".jpg";
+	cv::imwrite(s.str(), src_img_scaled);
 	std::cout << "[done]" << std::endl;
+	std::cout << "Resulting image: " << s.str() << std::endl;
 }
 
 float HexaMosaic::GetDistance(const cv::Mat& inSrcRow, const cv::Mat& inDataRow) {
