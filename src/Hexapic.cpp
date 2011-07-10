@@ -11,7 +11,7 @@
 namespace po = boost::program_options;
 
 int main(int argc,char **argv) {
-	int tile_size, dimensions;
+	int tile_size, dimensions, max_radius;
 	po::options_description generic("Generic options");
 	generic.add_options()
 			("version,v", "print version string")
@@ -32,6 +32,7 @@ int main(int argc,char **argv) {
 			("width", po::value<int>(), "width in tile size")
 			("height", po::value<int>(), "height in tile size")
 			("dimensions", po::value<int>(&dimensions)->default_value(16), "pca dimensions")
+			("max-radius", po::value<int>(&max_radius)->default_value(5), "max radius between duplicates")
 			;
 
 	po::options_description cmdline_options;
@@ -63,7 +64,7 @@ int main(int argc,char **argv) {
 				cInt width           = vm["width"].as<int>();
 				cInt height          = vm["height"].as<int>();
 
-				HexaMosaic hm(input_image, database, width, height, dimensions);
+				HexaMosaic hm(input_image, database, width, height, dimensions, max_radius);
 				hm.Create();
 			}
 			else

@@ -14,7 +14,8 @@ public:
 		rcString inDatabase,
 		cInt inWidth,
 		cInt inHeight,
-		cInt inDimensions
+		cInt inDimensions,
+		cInt inMaxRadius
 		);
 
 	void Create();
@@ -30,13 +31,23 @@ private:
 		}
 	};
 
-	float GetDistance(const cv::Mat& inSrcRow, const cv::Mat& inDataRow);
+	float GetDistance(
+		const cv::Mat& inSrcRow,
+		const cv::Mat& inDataRow
+		);
+
+	void CompressData(
+		const cv::PCA& inPca,
+		const cv::Mat& inUnCompressed,
+		cv::Mat& outCompressed
+		);
 
 	String mSourceImage;
 	String mDatabase;
 	int mWidth;
 	int mHeight;
 	int mDimensions;
+	int mMaxRadius;
 };
 
 #endif // HEXAMOSAIC_HDR

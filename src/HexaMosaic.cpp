@@ -14,13 +14,15 @@ HexaMosaic::HexaMosaic(
 	rcString inDatabase,
 	cInt inWidth,
 	cInt inHeight,
-	cInt inDimensions
+	cInt inDimensions,
+	cInt inMaxRadius
 	):
 	mSourceImage(inSourceImage),
 	mDatabase(inDatabase),
 	mWidth(inWidth),
 	mHeight(inHeight),
-	mDimensions(inDimensions)
+	mDimensions(inDimensions),
+	mMaxRadius(inMaxRadius)
 {
 }
 
@@ -67,6 +69,7 @@ void HexaMosaic::Create() {
 	pca_data.create(mHeight*mWidth, tile_size*tile_size*3, CV_8UC1);
 	cv::Rect roi_patch(0, 0, tile_size, tile_size);
 	cv::Mat src_patch;
+	std::vector<cv::Point2i> shuffled_coords;
 	for (int i = 0; i < mHeight; i++)
 	{
 		roi_patch.y = i * tile_size;
@@ -77,6 +80,7 @@ void HexaMosaic::Create() {
 			src_patch = src_patch.reshape(1, 1);
 			cv::Mat entry = pca_data.row(i*mWidth+j);
 			src_patch.copyTo(entry);
+			shuffled_coords.push_back(cv::Point(j,i));
 		}
 	}
 
@@ -99,40 +103,30 @@ void HexaMosaic::Create() {
 
 	// Compress original image data
 	std::cout << "Compress source image..." << std::flush;
-	cv::Mat flat_img, compressed_src_img, compressed_entry;
-	compressed_src_img.create(mWidth*mHeight, mDimensions, pca.eigenvectors.type());
-	for (int i = 0; i < pca_data.rows; i++)
-	{
-		flat_img = pca_data.row(i);
-		compressed_entry = compressed_src_img.row(i);
-		pca.project(flat_img, compressed_entry);
-	}
-	pca_data.release();
+	cv::Mat compressed_src_img;
+	CompressData(pca, pca_data, compressed_src_img);
 	std::cout << "[done]" << std::endl;
 
 	// Compress database image data
 	std::cout << "Compress database..." << std::flush;
 	cv::Mat compressed_database;
-	compressed_database.create(num_images, mDimensions, pca.eigenvectors.type());
-	for (int i = 0; i < num_images; i++)
-	{
-		flat_img = database.row(i);
-		compressed_entry = compressed_database.row(i);
-		pca.project(flat_img, compressed_entry);
-	}
+	CompressData(pca, database, compressed_database);
 	std::cout << "[done]" << std::endl;
 
 	// Construct mosaic
 	std::cout << "Construct mosaic..." << std::flush;
+	random_shuffle(shuffled_coords.begin(), shuffled_coords.end());
 	cv::Mat src_entry, tmp_entry, dst_patch;
 	vInt ids;
+	std::vector<cv::Point2i> locations;
 	for (int i = 0; i < mHeight; i++)
 	{
-		roi_patch.y = i * tile_size;
 		for (int j = 0; j < mWidth; j++)
 		{
-			roi_patch.x = j * tile_size;
-			src_entry = compressed_src_img.row(i*mWidth+j);
+			const cv::Point2i& loc = shuffled_coords[i*mWidth+j];
+			roi_patch.x = loc.x * tile_size;
+			roi_patch.y = loc.y * tile_size;
+			src_entry = compressed_src_img.row(loc.y*mWidth+loc.x);
 			// Match with database
 			std::priority_queue<Match> KNN; // All nearest neighbours
 			for (int k = 0; k < num_images; k++)
@@ -142,12 +136,34 @@ void HexaMosaic::Create() {
 				KNN.push(Match(k, dist));
 			}
 			int best_id = KNN.top().id;
-			while (!KNN.empty() && find(ids.begin(), ids.end(), best_id) != ids.end())
+			while (!KNN.empty())
 			{
+				// Stop if the image is new
+				if (find(ids.begin(), ids.end(), best_id) == ids.end())
+					break;
+
+				// Stop if the image has no duplicates in a certain radius
+				cInt max_radius = 5;
+				bool is_used = false;
+				for (int k = 0, n = locations.size(); k < n; k++)
+				{
+					int x = locations[k].x-loc.x;
+					int y = locations[k].y-loc.y;
+					int radius = int(ceil(sqrt(x*x+y*y)));
+					if (radius <= max_radius && ids[k] == best_id)
+					{
+						is_used = true;
+						break;
+					}
+				}
+
+				if (!is_used)
+					break;
 				KNN.pop();
 				best_id = KNN.top().id;
 			}
 			ids.push_back(best_id);
+			locations.push_back(loc);
 			src_patch = src_img_scaled(roi_patch);
 			dst_patch = database.row(best_id);
 			dst_patch = dst_patch.reshape(3, tile_size);
@@ -155,10 +171,25 @@ void HexaMosaic::Create() {
 		}
 	}
 	std::stringstream s;
-	s << "mosaic-pca" << mDimensions << "-tilesize" << tile_size << ".jpg";
+	s << "mosaic-pca" << mDimensions
+	  << "-tilesize"  << tile_size
+	  << "-maxradius" << mMaxRadius
+	  << ".jpg";
+
 	cv::imwrite(s.str(), src_img_scaled);
 	std::cout << "[done]" << std::endl;
 	std::cout << "Resulting image: " << s.str() << std::endl;
+}
+
+void HexaMosaic::CompressData(const cv::PCA& inPca, const cv::Mat& inUnCompressed, cv::Mat& outCompressed) {
+	outCompressed.create(inUnCompressed.rows, mDimensions, inPca.eigenvectors.type());
+	cv::Mat entry, compressed_entry;
+	for (int i = 0; i < inUnCompressed.rows; i++)
+	{
+		entry = inUnCompressed.row(i);
+		compressed_entry = outCompressed.row(i);
+		inPca.project(entry, compressed_entry);
+	}
 }
 
 float HexaMosaic::GetDistance(const cv::Mat& inSrcRow, const cv::Mat& inDataRow) {
