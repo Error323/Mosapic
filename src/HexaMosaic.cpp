@@ -60,7 +60,9 @@ void HexaMosaic::Create() {
 			}
 		}
 	}
+	#ifdef DEBUG
 	cv::imwrite("hexmask.jpg",hex_mask);
+	#endif // DEBUG
 
 	// Load source image
 	cv::Mat src_img = cv::imread(mSourceImage, 1);
@@ -78,7 +80,8 @@ void HexaMosaic::Create() {
 					);
 
 	// Compute pca input data from source image
-	cFloat dx = src_img_scaled.cols / float(mWidth);
+	cv::Mat pca_input(mWidth*mHeight, hex_mask.rows*hex_mask.cols*3, CV_8UC1);
+	cFloat dx = src_img_scaled.cols / float(mWidth) + 10;
 	cFloat dy = src_img_scaled.rows / float(mHeight);
 	for (int i = 0, n = coordinates.size(); i < n; i++)
 	{
@@ -89,11 +92,28 @@ void HexaMosaic::Create() {
 		cv::Rect roi(src_x, src_y, hex_mask.cols, hex_mask.rows);
 		if (roi.x+hex_mask.cols >= src_img_scaled.cols || roi.y+hex_mask.rows >= src_img_scaled.rows)
 			continue;
-		cv::Mat src_patch = src_img_scaled(roi);
-		cv::Mat dst_patch = dst_img(roi);
-		src_patch.copyTo(dst_patch, hex_mask);
+		cv::Mat data_row, pca_input_row = pca_input.row(i);
+		DataRow(src_x, src_y, src_img_scaled, hex_mask, data_row);
+		data_row.copyTo(pca_input_row);
 	}
-	cv::imwrite("dst_img.jpg",dst_img);
+
+	std::cout << "Performing pca..." << std::flush;
+	cv::PCA pca(pca_input, cv::Mat(), CV_PCA_DATA_AS_ROW, mDimensions);
+	#ifdef DEBUG
+	// Construct eigenvector images for debugging
+	for (int i = 0; i < mDimensions; i++)
+	{
+		cv::Mat eigenvec;
+		cv::normalize(pca.eigenvectors.row(i), eigenvec, 255, 0, cv::NORM_MINMAX);
+		eigenvec = eigenvec.reshape(3, hex_mask.rows);
+		std::stringstream s;
+		s << i;
+		std::string entry = "eigenvector-" + s.str() + ".jpg";
+		cv::imwrite(entry, eigenvec);
+	}
+	#endif
+	std::cout << "[done]" << std::endl;
+
 /*
 	// Precache destination image
 	cv::Mat dst_img(int(roundf(mWidth*radius*unit_dx)),
