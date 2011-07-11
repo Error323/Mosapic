@@ -5,6 +5,9 @@
 #include <sstream>
 
 #define ROWS_PER_FILE 1000
+#define HALF_HEXAGON_WIDTH sinf(M_PI / 3.0f)
+#define HEXAGON_WIDTH (2.0f * HALF_HEXAGON_WIDTH)
+
 void HexaCrawler::Crawl(rcString inSrcDir, rcString inDstDir, cInt inTileSize) {
 	mDstDir = inDstDir;
 	mTileSize = inTileSize;
@@ -66,12 +69,13 @@ void HexaCrawler::CloseFS() {
 }
 
 void HexaCrawler::Resize(cv::Mat& outImg) {
-	int min = std::min<int>(outImg.rows, outImg.cols);
+	int rest_width = outImg.cols % int(mTileSize/2*HEXAGON_WIDTH);
+	int rest_height = outImg.rows % (mTileSize-1);
 	cv::Mat img_tmp;
-	cv::Size size(min,min);
+	cv::Size size(outImg.cols-rest_width, outImg.rows-rest_height);
 	cv::Point2f center(outImg.cols/2.0f, outImg.rows/2.0f);
 	cv::getRectSubPix(outImg, size, center, img_tmp);
-	cv::resize(img_tmp, outImg, cv::Size(mTileSize,mTileSize), 0.0, 0.0, CV_INTER_CUBIC);
+	cv::resize(img_tmp, outImg, cv::Size(mTileSize/2*HEXAGON_WIDTH, mTileSize-1));
 }
 
 void HexaCrawler::Process(rcString inImgName) {
