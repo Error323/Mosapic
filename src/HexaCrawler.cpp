@@ -4,23 +4,19 @@
 #include <iostream>
 #include <sstream>
 
-#define ROWS_PER_FILE 1000
-#define HALF_HEXAGON_WIDTH sinf(M_PI / 3.0f)
-#define HEXAGON_WIDTH (2.0f * HALF_HEXAGON_WIDTH)
-
 void HexaCrawler::Crawl(rcString inSrcDir, rcString inDstDir, cInt inTileSize) {
-	mDstDir = inDstDir;
-	mTileSize = inTileSize;
+	mDstDir    = inDstDir;
+	mTileSize  = inTileSize;
+	mHexWidth  = roundf(mTileSize/2.0f*HEXAGON_WIDTH);
+	mHexHeight = mTileSize;
+
 	if (!boost::filesystem::exists(inDstDir))
 	{
 		std::cout << "Directory `" << inDstDir << "' doesn't exist yet, creating..." << std::endl;
 		boost::filesystem::create_directory(inDstDir);
 	}
-	OpenFS();
 	Crawl(inSrcDir);
-	CloseFS();
-	fs.open(mDstDir + "/rawdata.yml", cv::FileStorage::WRITE);
-	fs << "num_files" << mFileCount;
+	fs.open(mDstDir + "/meta.yml", cv::FileStorage::WRITE);
 	fs << "num_images" << mImgCount;
 	fs << "tile_size" << mTileSize;
 	fs.release();
@@ -53,29 +49,15 @@ void HexaCrawler::Crawl(const boost::filesystem::path &inPath) {
 	}
 }
 
-void HexaCrawler::OpenFS() {
-	std::stringstream s;
-	s << mFileCount;
-	fs.open(mDstDir + "/rawdata_" + s.str() + ".yml", cv::FileStorage::WRITE);
-	mFileCount++;
-}
-
-void HexaCrawler::CloseFS() {
-	int remaining_images = mImgCount % ROWS_PER_FILE;
-	fs << "rows" << ((remaining_images == 0) ? ROWS_PER_FILE : remaining_images);
-	fs << "cols" << mTileSize*mTileSize*3;
-	fs << "file" << mFileCount;
-	fs.release();
-}
-
 void HexaCrawler::Resize(cv::Mat& outImg) {
-	int rest_width = outImg.cols % int(mTileSize/2*HEXAGON_WIDTH);
-	int rest_height = outImg.rows % (mTileSize-1);
+	int min = std::min<int>(outImg.rows, outImg.cols);
+	int width  = min - (min % mHexWidth);
+	int height = min - (min % mHexHeight);
 	cv::Mat img_tmp;
-	cv::Size size(outImg.cols-rest_width, outImg.rows-rest_height);
-	cv::Point2f center(outImg.cols/2.0f, outImg.rows/2.0f);
+	cv::Size size(width, height);
+	cv::Point2f center(outImg.cols/2, outImg.rows/2);
 	cv::getRectSubPix(outImg, size, center, img_tmp);
-	cv::resize(img_tmp, outImg, cv::Size(mTileSize/2*HEXAGON_WIDTH, mTileSize-1));
+	cv::resize(img_tmp, outImg, cv::Size(mHexWidth, mHexHeight));
 }
 
 void HexaCrawler::Process(rcString inImgName) {
@@ -88,17 +70,11 @@ void HexaCrawler::Process(rcString inImgName) {
 		return;
 	}
 
-	HexaCrawler::Resize(img_color);
+	Resize(img_color);
 
-	img_color = img_color.reshape(1, 1);
 	std::stringstream s;
 	s << mImgCount;
-	fs << "img_" + s.str() << img_color;
+	cv::imwrite(mDstDir + "img_" + s.str() + ".jpg", img_color);
 	mImgCount++;
-	if (mImgCount % ROWS_PER_FILE == 0)
-	{
-		CloseFS();
-		OpenFS();
-	}
 	std::cout << "[done]" << std::endl;
 }

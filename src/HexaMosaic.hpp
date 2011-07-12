@@ -5,7 +5,10 @@
 #include <opencv2/opencv.hpp>
 #include "Types.hpp"
 
-DECLARE_CLASS(HexaMosaic);
+DECLARE_CLASS(HexaMosaic)
+
+#define HALF_HEXAGON_WIDTH sinf(M_PI / 3.0f)
+#define HEXAGON_WIDTH (2.0f * HALF_HEXAGON_WIDTH)
 
 class HexaMosaic {
 public:
@@ -62,7 +65,7 @@ private:
 		);
 
 	String mSourceImage;
-	String mDatabaseFileName;
+	String mDatabaseDir;
 
 	int mWidth;
 	int mHeight;
@@ -70,6 +73,8 @@ private:
 	int mMaxRadius;
 	int mNumImages;
 	int mTileSize;
+	int mHexWidth;
+	int mHexHeight;
 
 	cv::Mat mDatabase;
 };

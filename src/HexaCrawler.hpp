@@ -6,8 +6,7 @@
 #include <boost/regex.hpp>
 #include <opencv2/opencv.hpp>
 
-DECLARE_CLASS(HexaCrawler);
-DECLARE_CLASS(Image);
+DECLARE_CLASS(HexaCrawler)
 
 class HexaCrawler {
 public:
@@ -21,13 +20,13 @@ private:
 	int mImgCount;
 	int mFileCount;
 	int mTileSize;
+	int mHexWidth;
+	int mHexHeight;
 	String mDstDir;
 	cv::FileStorage fs;
 
 	void Crawl(const boost::filesystem::path &inPath);
 	void Process(rcString inImgName);
-	void CloseFS();
-	void OpenFS();
 };
 
 #endif // HEXACRAWLER_HDR
