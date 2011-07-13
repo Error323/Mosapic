@@ -7,8 +7,14 @@
 
 DECLARE_CLASS(HexaMosaic)
 
-#define HALF_HEXAGON_WIDTH sinf(M_PI / 3.0f)
-#define HEXAGON_WIDTH (2.0f * HALF_HEXAGON_WIDTH)
+// Unit hexagon (i.e. edge length = 1) with its corners facing north and south
+#define HALF_HEXAGON_WIDTH	sinf(M_PI / 3.0f)
+#define HEXAGON_WIDTH		(2.0f * HALF_HEXAGON_WIDTH)
+#define HEXAGON_HEIGHT		2.0f
+
+#define DATABASE_NAME		"meta.yml"
+#define IMAGE_PREFIX		"img_"
+#define IMAGE_EXT			".jpg"
 
 class HexaMosaic {
 public:
@@ -72,7 +78,6 @@ private:
 	int mDimensions;
 	int mMaxRadius;
 	int mNumImages;
-	int mTileSize;
 	int mHexWidth;
 	int mHexHeight;
 

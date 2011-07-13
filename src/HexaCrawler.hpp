@@ -19,7 +19,6 @@ public:
 private:
 	int mImgCount;
 	int mFileCount;
-	int mTileSize;
 	int mHexWidth;
 	int mHexHeight;
 	String mDstDir;

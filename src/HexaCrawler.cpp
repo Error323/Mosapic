@@ -6,9 +6,8 @@
 
 void HexaCrawler::Crawl(rcString inSrcDir, rcString inDstDir, cInt inTileSize) {
 	mDstDir    = inDstDir;
-	mTileSize  = inTileSize;
-	mHexWidth  = roundf(mTileSize/2.0f*HEXAGON_WIDTH);
-	mHexHeight = mTileSize;
+	mHexHeight = inTileSize;
+	mHexWidth  = roundf(mHexHeight/2.0f*HEXAGON_WIDTH);
 
 	if (!boost::filesystem::exists(inDstDir))
 	{
@@ -16,9 +15,10 @@ void HexaCrawler::Crawl(rcString inSrcDir, rcString inDstDir, cInt inTileSize) {
 		boost::filesystem::create_directory(inDstDir);
 	}
 	Crawl(inSrcDir);
-	fs.open(mDstDir + "/meta.yml", cv::FileStorage::WRITE);
+	fs.open(mDstDir + "/" + DATABASE_NAME, cv::FileStorage::WRITE);
 	fs << "num_images" << mImgCount;
-	fs << "tile_size" << mTileSize;
+	fs << "hex_width" << mHexWidth;
+	fs << "hex_height" << mHexHeight;
 	fs.release();
 	std::cout << std::endl << "Processed " << mImgCount << " images." << std::endl;
 	std::cout << std::endl << "Files " << mFileCount << "." << std::endl;
@@ -64,7 +64,7 @@ void HexaCrawler::Process(rcString inImgName) {
 	std::cout << "Processing `" << inImgName << "'..." << std::flush;
 
 	cv::Mat img_color = cv::imread(inImgName, 1);
-	if (img_color.data == NULL || img_color.rows < mTileSize || img_color.cols < mTileSize)
+	if (img_color.data == NULL || img_color.rows < mHexHeight || img_color.cols < mHexHeight)
 	{
 		std::cout << "[failed]" << std::endl;
 		return;
@@ -74,7 +74,7 @@ void HexaCrawler::Process(rcString inImgName) {
 
 	std::stringstream s;
 	s << mImgCount;
-	cv::imwrite(mDstDir + "img_" + s.str() + ".jpg", img_color);
+	cv::imwrite(mDstDir + IMAGE_PREFIX + s.str() + IMAGE_EXT, img_color);
 	mImgCount++;
 	std::cout << "[done]" << std::endl;
 }
