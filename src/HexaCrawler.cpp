@@ -5,7 +5,7 @@
 #include <sstream>
 
 void HexaCrawler::Crawl(rcString inSrcDir, rcString inDstDir, cInt inHexHeight) {
-	mDstDir    = inDstDir;
+	mDstDir    = inDstDir.at(inDstDir.size()-1) == '/' ? mDstDir : mDstDir + '/';
 	mHexHeight = inHexHeight;
 	mHexWidth  = roundf(mHexHeight/2.0f*HEXAGON_WIDTH);
 	mImgCount  = 0;

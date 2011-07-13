@@ -18,12 +18,12 @@ HexaMosaic::HexaMosaic(
 	cInt inMinRadius
 	):
 	mSourceImage(inSourceImage),
-	mDatabaseDir(inDatabase),
 	mWidth(inWidth),
 	mHeight(inHeight),
 	mDimensions(inDimensions),
 	mMinRadius(inMinRadius)
 {
+	mDatabaseDir = inDatabase.at(inDatabase.size()-1) == '/' ? inDatabase : inDatabase + '/';
 	cv::FileStorage fs(mDatabaseDir + DATABASE_NAME, cv::FileStorage::READ);
 	fs["num_images"] >> mNumImages;
 	fs["hex_width"] >> mHexWidth;
