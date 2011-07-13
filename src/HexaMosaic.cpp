@@ -89,8 +89,9 @@ void HexaMosaic::Create() {
 		cInt src_y = roundf(y * dy);
 		cInt src_x = roundf(x * dx + ((y % 2) * (dx / 2.0f)));
 		cv::Rect roi(src_x, src_y, roundf(dx), roundf(dy));
-		cv::Mat data_row, patch = src_img(roi);
-		cv::resize(patch, data_row, cv::Size(mHexWidth, mHexHeight));
+		cv::Mat data_row, patch_resized, patch = src_img(roi);
+		cv::resize(patch, patch_resized, cv::Size(mHexWidth, mHexHeight));
+		patch_resized.copyTo(data_row, mHexMask);
 		cv::Mat pca_input_row = pca_input.row(i);
 		data_row = data_row.reshape(1,1);
 		data_row.copyTo(pca_input_row);
