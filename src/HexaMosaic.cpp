@@ -59,9 +59,9 @@ HexaMosaic::HexaMosaic(
 		}
 	}
 
-	#ifdef DEBUG
+#ifdef DEBUG
 	cv::imwrite("hexmask.jpg",mHexMask);
-	#endif // DEBUG
+#endif // DEBUG
 }
 
 void HexaMosaic::Create() {
@@ -99,7 +99,7 @@ void HexaMosaic::Create() {
 
 	std::cout << "Performing pca..." << std::flush;
 	cv::PCA pca(pca_input, cv::Mat(), CV_PCA_DATA_AS_ROW, mDimensions);
-	#ifdef DEBUG
+#ifdef DEBUG
 	// Construct eigenvector images for debugging
 	for (int i = 0; i < mDimensions; i++)
 	{
@@ -111,7 +111,7 @@ void HexaMosaic::Create() {
 		std::string entry = "eigenvector-" + s.str() + ".jpg";
 		cv::imwrite(entry, eigenvec);
 	}
-	#endif
+#endif // DEBUG
 	std::cout << "[done]" << std::endl;
 
 	// Compress original image data
@@ -200,12 +200,34 @@ void HexaMosaic::Create() {
 		src_patch = cv::imread(mDatabaseDir + IMAGE_PREFIX + s.str() + IMAGE_EXT);
 		src_patch.copyTo(dst_patch, mHexMask);
 		mHexMask.copyTo(dst_patch_gray, mHexMask);
+#ifdef DEBUG
+		cv::putText(dst_img, s.str(),
+					cv::Point(src_x+dx/3.0f, src_y+dy/1.5f),
+					CV_FONT_HERSHEY_PLAIN, 2.0,
+					cv::Scalar(255,0,255),
+					2);
+#endif // DEBUG
 	}
 	std::cout << "[done]" << std::endl;
 
-	// Anti-alias the image.
+	// Stich edges
 	cv::Mat dst_binary;
 	cv::threshold(dst_img_gray, dst_binary, 0.0, 255.0, CV_THRESH_BINARY_INV);
+	std::vector<cv::Mat> split;
+	cv::split(dst_img, split);
+	for (int y = dy/2.0f; y < dst_binary.rows-dy/2.0f; y++)
+	{
+		for (int x = dx/2.0f; x < dst_binary.cols-dx/2.0f; x++)
+		{
+			if (dst_binary.at<Uint8>(y,x) > 0)
+			{
+				split[0].at<Uint8>(y, x) = split[0].at<Uint8>(y, x+1);
+				split[1].at<Uint8>(y, x) = split[1].at<Uint8>(y, x+1);
+				split[2].at<Uint8>(y, x) = split[2].at<Uint8>(y, x+1);
+			}
+		}
+	}
+	cv::merge(split, dst_img);
 
 	// Write image to disk
 	int p = mDatabaseDir.substr(0, mDatabaseDir.size()-1).find_last_of('/') + 1;
