@@ -41,7 +41,6 @@ private:
 	};
 
 	void LoadDatabase(
-		rcString inFileName,
 		cv::Mat& outDatabase
 		);
 
@@ -76,12 +75,17 @@ private:
 	int mWidth;
 	int mHeight;
 	int mDimensions;
-	int mMaxRadius;
+	int mMinRadius;
 	int mNumImages;
 	int mHexWidth;
 	int mHexHeight;
+	int mHexRadius;
 
 	cv::Mat mDatabase;
+	cv::Mat mHexMask;
+
+	std::vector<cv::Point2i> mCoords;
+	std::vector<int> mIndices;
 };
 
 #endif // HEXAMOSAIC_HDR

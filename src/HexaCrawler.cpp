@@ -4,10 +4,11 @@
 #include <iostream>
 #include <sstream>
 
-void HexaCrawler::Crawl(rcString inSrcDir, rcString inDstDir, cInt inTileSize) {
+void HexaCrawler::Crawl(rcString inSrcDir, rcString inDstDir, cInt inHexHeight) {
 	mDstDir    = inDstDir;
-	mHexHeight = inTileSize;
+	mHexHeight = inHexHeight;
 	mHexWidth  = roundf(mHexHeight/2.0f*HEXAGON_WIDTH);
+	mImgCount  = 0;
 
 	if (!boost::filesystem::exists(inDstDir))
 	{
@@ -15,13 +16,12 @@ void HexaCrawler::Crawl(rcString inSrcDir, rcString inDstDir, cInt inTileSize) {
 		boost::filesystem::create_directory(inDstDir);
 	}
 	Crawl(inSrcDir);
-	fs.open(mDstDir + "/" + DATABASE_NAME, cv::FileStorage::WRITE);
+	fs.open(mDstDir + DATABASE_NAME, cv::FileStorage::WRITE);
 	fs << "num_images" << mImgCount;
 	fs << "hex_width" << mHexWidth;
 	fs << "hex_height" << mHexHeight;
 	fs.release();
 	std::cout << std::endl << "Processed " << mImgCount << " images." << std::endl;
-	std::cout << std::endl << "Files " << mFileCount << "." << std::endl;
 }
 
 void HexaCrawler::Crawl(const boost::filesystem::path &inPath) {

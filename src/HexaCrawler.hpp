@@ -10,7 +10,7 @@ DECLARE_CLASS(HexaCrawler)
 
 class HexaCrawler {
 public:
-	HexaCrawler(): mImgCount(0), mFileCount(0) {}
+	HexaCrawler(): mImgCount(0) {}
 	~HexaCrawler() {}
 
 	void Crawl(rcString inSrcDir, rcString inDstDir, cInt inTileSize);
@@ -18,7 +18,6 @@ public:
 
 private:
 	int mImgCount;
-	int mFileCount;
 	int mHexWidth;
 	int mHexHeight;
 	String mDstDir;

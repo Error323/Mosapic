@@ -22,7 +22,7 @@ int main(int argc,char **argv) {
 	crawl.add_options()
 			("image-dir,i", po::value<String>(), "image directory")
 			("output-dir,o", po::value<String>(), "cache directory and database")
-			("tile-size,t", po::value<int>(&tile_size)->default_value(100), "tile size")
+			("tile-size,t", po::value<int>(&tile_size)->default_value(100), "image tile size")
 			;
 
 	po::options_description hexapic("Hexapic options");
@@ -32,7 +32,7 @@ int main(int argc,char **argv) {
 			("width", po::value<int>(), "width in tile size")
 			("height", po::value<int>(), "height in tile size")
 			("dimensions", po::value<int>(&dimensions)->default_value(8), "pca dimensions")
-			("max-radius", po::value<int>(&max_radius)->default_value(5), "max radius between duplicates")
+			("min-radius", po::value<int>(&max_radius)->default_value(5), "min radius between duplicates")
 			;
 
 	po::options_description cmdline_options;

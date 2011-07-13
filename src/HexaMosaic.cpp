@@ -15,78 +15,84 @@ HexaMosaic::HexaMosaic(
 	cInt inWidth,
 	cInt inHeight,
 	cInt inDimensions,
-	cInt inMaxRadius
+	cInt inMinRadius
 	):
 	mSourceImage(inSourceImage),
 	mDatabaseDir(inDatabase),
 	mWidth(inWidth),
 	mHeight(inHeight),
 	mDimensions(inDimensions),
-	mMaxRadius(inMaxRadius)
+	mMinRadius(inMinRadius)
 {
-}
-
-void HexaMosaic::Create() {
-	// Load the database (raw images)
-	LoadDatabase(mDatabaseDir + "/" + DATABASE_NAME, mDatabase);
+	cv::FileStorage fs(mDatabaseDir + DATABASE_NAME, cv::FileStorage::READ);
+	fs["num_images"] >> mNumImages;
+	fs["hex_width"] >> mHexWidth;
+	fs["hex_height"] >> mHexHeight;
+	fs.release();
+	mHexRadius = mHexHeight / 2.0f;
 
 	// Cache coordinates, so we can e.g. randomize
-	std::vector<cv::Point2i> coordinates;
 	for (int y = 0; y < mHeight; y++)
+	{
 		for (int x = 0; x < mWidth; x++)
-			coordinates.push_back(cv::Point2i(x,y));
-
-	// unit dimensions of hexagon facing upwards
-	cFloat unit_dx    = HEXAGON_WIDTH;
-	cFloat unit_dy    = HEXAGON_HEIGHT * (3.0f/4.0f);
-	cFloat radius     = mHexHeight / 2.0f;
+		{
+			if (y % 2 == 1 && x == mWidth-1)
+				continue;
+			mIndices.push_back(mCoords.size());
+			mCoords.push_back(cv::Point2i(x,y));
+		}
+	}
 
 	// Precache hexagon coordinates
-	cv::Mat hex_mask(mHexHeight, mHexWidth, CV_8UC1, cv::Scalar(0));
-	for (int j = -radius; j < radius; j++)
+	mHexMask.create(mHexHeight, mHexWidth, CV_8UC1);
+	mHexMask.setTo(cv::Scalar(0));
+	for (int j = -mHexRadius; j < mHexRadius; j++)
 	{
-		for (int i = roundf(-radius * HALF_HEXAGON_WIDTH); i < roundf(radius * HALF_HEXAGON_WIDTH); i++)
+		for (int i = roundf(-mHexRadius * HALF_HEXAGON_WIDTH); i < roundf(mHexRadius * HALF_HEXAGON_WIDTH); i++)
 		{
-			if (HexaMosaic::InHexagon(i, j, radius))
+			if (HexaMosaic::InHexagon(i, j, mHexRadius))
 			{
-				cInt x = i+(radius*HALF_HEXAGON_WIDTH);
-				cInt y = j+radius;
-				hex_mask.at<Uint8>(y,x) = 255;
+				cInt x = i+(mHexRadius*HALF_HEXAGON_WIDTH);
+				cInt y = j+mHexRadius;
+				mHexMask.at<Uint8>(y,x) = 255;
 			}
 		}
 	}
 
 	#ifdef DEBUG
-	cv::imwrite("hexmask.jpg",hex_mask);
+	cv::imwrite("hexmask.jpg",mHexMask);
 	#endif // DEBUG
+}
+
+void HexaMosaic::Create() {
+	// Load the database (raw images)
+	LoadDatabase(mDatabase);
+
+	// unit dimensions of hexagon facing upwards
+	cFloat unit_dx = HEXAGON_WIDTH;
+	cFloat unit_dy = HEXAGON_HEIGHT * (3.0f/4.0f);
 
 	// Load source image
 	cv::Mat src_img = cv::imread(mSourceImage, 1);
-	cv::Mat src_img_scaled;
-	cv::resize(src_img,
-			   src_img_scaled,
-			   cv::Size(int(roundf(mWidth*radius*unit_dy)),
-						int(roundf(mHeight*radius*unit_dy))
-						)
-			   );
-	cv::Mat dst_img(int(roundf(mWidth*radius*unit_dy)),
-					int(roundf(mHeight*radius*unit_dy)),
-					CV_8UC3,
-					cv::Scalar(0,0,0)
-					);
+	cv::Mat dst_img(mHeight*mHexHeight*.75+mHexHeight*.25+mHeight*.25,
+					mWidth*mHexWidth+mWidth*.25,
+					CV_8UC3);
 
 	// Compute pca input data from source image
-	cv::Mat pca_input(mWidth*mHeight, mHexHeight*mHexWidth*3, CV_8UC1);
-	cFloat dx = radius*unit_dx;
-	cFloat dy = radius*unit_dy;
-	for (int i = 0, n = coordinates.size(); i < n; i++)
+	cv::Mat pca_input(mCoords.size(), mHexHeight*mHexWidth*3, CV_8UC1);
+	float dx = src_img.cols / float(mWidth);
+	float dy = src_img.rows / float(mHeight);
+	for (int i = 0, n = mCoords.size(); i < n; i++)
 	{
-		cInt x = coordinates[i].x;
-		cInt y = coordinates[i].y;
-		cInt src_y = (y * dy);
-		cInt src_x = (x * dx + ((y % 2) * (dx / 2.0f)));
-		cv::Mat data_row, pca_input_row = pca_input.row(i);
-		DataRow(src_x, src_y, src_img_scaled, hex_mask, data_row);
+		cInt x = mCoords[i].x;
+		cInt y = mCoords[i].y;
+		cInt src_y = roundf(y * dy);
+		cInt src_x = roundf(x * dx + ((y % 2) * (dx / 2.0f)));
+		cv::Rect roi(src_x, src_y, roundf(dx), roundf(dy));
+		cv::Mat data_row, patch = src_img(roi);
+		cv::resize(patch, data_row, cv::Size(mHexWidth, mHexHeight));
+		cv::Mat pca_input_row = pca_input.row(i);
+		data_row = data_row.reshape(1,1);
 		data_row.copyTo(pca_input_row);
 	}
 
@@ -121,14 +127,16 @@ void HexaMosaic::Create() {
 
 	// Construct mosaic
 	std::cout << "Construct mosaic..." << std::flush;
-	random_shuffle(coordinates.begin(), coordinates.end());
+	dx = mHexRadius*unit_dx;
+	dy = mHexRadius*unit_dy;
+	random_shuffle(mIndices.begin(), mIndices.end());
 	cv::Mat src_entry, tmp_entry, dst_patch, src_patch;
 	vInt ids;
 	std::vector<cv::Point2i> locations;
-	for (int i = 0, n = coordinates.size(); i < n; i++)
+	for (int i = 0, n = mCoords.size(); i < n; i++)
 	{
-		const cv::Point2i& loc = coordinates[i];
-		src_entry = compressed_src_img.row(loc.y*mWidth+loc.x);
+		const cv::Point2i& loc = mCoords[mIndices[i]];
+		src_entry = compressed_src_img.row(mIndices[i]);
 		// Match with database
 		std::priority_queue<Match> KNN; // All nearest neighbours
 		for (int k = 0; k < mNumImages; k++)
@@ -151,7 +159,7 @@ void HexaMosaic::Create() {
 				cInt x = locations[k].x-loc.x;
 				cInt y = locations[k].y-loc.y;
 				cInt r = int(ceil(sqrt(x*x+y*y)));
-				if (r <= mMaxRadius && ids[k] == best_id)
+				if (r <= mMinRadius && ids[k] == best_id)
 				{
 					is_used = true;
 					break;
@@ -170,22 +178,28 @@ void HexaMosaic::Create() {
 		cInt src_y = (loc.y * dy);
 		cInt src_x = (loc.x * dx + ((loc.y % 2) * (dx / 2.0f)));
 		cv::Rect roi(src_x, src_y, mHexWidth, mHexHeight);
+//		cv::rectangle(dst_img, roi, cv::Scalar(255,255,255));
+//		cv::imshow("dst_img", dst_img);
+//		cv::waitKey();
 		dst_patch = dst_img(roi);
 		std::stringstream s;
 		s << best_id;
 		src_patch = cv::imread(mDatabaseDir + "img_" + s.str() + ".jpg");
-		src_patch.copyTo(dst_patch, hex_mask);
+		src_patch.copyTo(dst_patch, mHexMask);
 	}
+	std::cout << "[done]" << std::endl;
 
+	// TODO: anti-aliasing
+
+	// Write image to disk
 	std::stringstream s;
 	s << "mosaic-" << mWidth << "x" << mHeight
 	  << "-pca" << mDimensions
 	  << "-hexdims"  << mHexWidth << "x" << mHexHeight
-	  << "-maxradius" << mMaxRadius
+	  << "-minradius" << mMinRadius
 	  << ".jpg";
 
 	cv::imwrite(s.str(), dst_img);
-	std::cout << "[done]" << std::endl;
 	std::cout << "Resulting image: " << s.str() << std::endl;
 }
 
@@ -196,13 +210,7 @@ void HexaMosaic::DataRow(cInt inX, cInt inY, const cv::Mat &inSrcImg, const cv::
 	outDataRow = outDataRow.reshape(1,1);
 }
 
-void HexaMosaic::LoadDatabase(rcString inFileName, cv::Mat& outDatabase) {
-	cv::FileStorage fs(inFileName, cv::FileStorage::READ);
-	fs["num_images"] >> mNumImages;
-	fs["hex_width"] >> mHexWidth;
-	fs["hex_height"] >> mHexHeight;
-	fs.release();
-
+void HexaMosaic::LoadDatabase(cv::Mat& outDatabase) {
 	std::cout << "Loading " << mNumImages << " images..." << std::flush;
 	cv::Mat roi, row;
 	outDatabase.create(mNumImages, mHexWidth*mHexHeight*3, CV_8UC1);
