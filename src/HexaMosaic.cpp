@@ -128,6 +128,7 @@ void HexaMosaic::Create() {
 
 	// Compress database image data
 	std::cout << "Compress database..." << std::flush;
+	int count_down = 10;
 	cv::Mat compressed_database(mNumImages, mDimensions, CV_32FC1);
 	for (int i = 0; i < mNumImages; i++)
 	{
@@ -137,10 +138,13 @@ void HexaMosaic::Create() {
 		entry = cv::imread(img_name, 1).reshape(1,1);
 		compressed_entry = compressed_database.row(i);
 		pca.project(entry, compressed_entry);
+		if (i % (mNumImages/10) == 0 && count_down >= 0)
+			std::cout << count_down-- << " " << std::flush;
 	}
 	std::cout << "[done]" << std::endl;
 
 	// Construct mosaic
+	count_down = 10;
 	std::cout << "Construct mosaic..." << std::flush;
 	dx = mHexRadius*unit_dx;
 	dy = mHexRadius*unit_dy;
@@ -207,6 +211,8 @@ void HexaMosaic::Create() {
 					cv::Scalar(255,0,255),
 					2);
 #endif // DEBUG
+		if (i % (mCoords.size()/10) == 0 && count_down >= 0)
+			std::cout << count_down-- << " " << std::flush;
 	}
 	std::cout << "[done]" << std::endl;
 
@@ -233,7 +239,7 @@ void HexaMosaic::Create() {
 	int p = mDatabaseDir.substr(0, mDatabaseDir.size()-1).find_last_of('/') + 1;
 	std::string database = mDatabaseDir.substr(p);
 	std::stringstream s;
-	s << "mosaic-" << mWidth << "x" << mHeight
+	s << "mosaic:" << mWidth << "x" << mHeight
 	  << "-pca:" << mDimensions
 	  << "-hexdims:"  << mHexWidth << "x" << mHexHeight
 	  << "-minradius:" << mMinRadius
