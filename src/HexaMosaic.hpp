@@ -40,19 +40,9 @@ private:
 		}
 	};
 
-	void LoadDatabase(
-		cv::Mat& outDatabase
-		);
-
 	float GetDistance(
 		const cv::Mat& inSrcRow,
 		const cv::Mat& inDataRow
-		);
-
-	void CompressData(
-		const cv::PCA& inPca,
-		const cv::Mat& inUnCompressed,
-		cv::Mat& outCompressed
 		);
 
 	bool InHexagon(

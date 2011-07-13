@@ -65,9 +65,6 @@ HexaMosaic::HexaMosaic(
 }
 
 void HexaMosaic::Create() {
-	// Load the database (raw images)
-	LoadDatabase(mDatabase);
-
 	// unit dimensions of hexagon facing upwards
 	cFloat unit_dx = HEXAGON_WIDTH;
 	cFloat unit_dy = HEXAGON_HEIGHT * (3.0f/4.0f);
@@ -77,6 +74,9 @@ void HexaMosaic::Create() {
 	cv::Mat dst_img(mHeight*mHexHeight*.75+mHexHeight*.25+mHeight*.25,
 					mWidth*mHexWidth+mWidth*.25,
 					CV_8UC3);
+	cv::Mat dst_img_gray(mHeight*mHexHeight*.75+mHexHeight*.25+mHeight*.25,
+					mWidth*mHexWidth+mWidth*.25,
+					CV_8UC1);
 
 	// Compute pca input data from source image
 	cv::Mat pca_input(mCoords.size(), mHexHeight*mHexWidth*3, CV_8UC1);
@@ -116,14 +116,28 @@ void HexaMosaic::Create() {
 
 	// Compress original image data
 	std::cout << "Compress source image..." << std::flush;
-	cv::Mat compressed_src_img;
-	CompressData(pca, pca_input, compressed_src_img);
+	cv::Mat compressed_src_img(pca_input.rows, mDimensions, CV_32FC1);
+	cv::Mat entry, compressed_entry;
+	for (int i = 0; i < pca_input.rows; i++)
+	{
+		entry = pca_input.row(i);
+		compressed_entry = compressed_src_img.row(i);
+		pca.project(entry, compressed_entry);
+	}
 	std::cout << "[done]" << std::endl;
 
 	// Compress database image data
 	std::cout << "Compress database..." << std::flush;
-	cv::Mat compressed_database;
-	CompressData(pca, mDatabase, compressed_database);
+	cv::Mat compressed_database(mNumImages, mDimensions, CV_32FC1);
+	for (int i = 0; i < mNumImages; i++)
+	{
+		std::stringstream s;
+		s << i;
+		std::string img_name = mDatabaseDir + IMAGE_PREFIX + s.str() + IMAGE_EXT;
+		entry = cv::imread(img_name, 1).reshape(1,1);
+		compressed_entry = compressed_database.row(i);
+		pca.project(entry, compressed_entry);
+	}
 	std::cout << "[done]" << std::endl;
 
 	// Construct mosaic
@@ -131,7 +145,7 @@ void HexaMosaic::Create() {
 	dx = mHexRadius*unit_dx;
 	dy = mHexRadius*unit_dy;
 	random_shuffle(mIndices.begin(), mIndices.end());
-	cv::Mat src_entry, tmp_entry, dst_patch, src_patch;
+	cv::Mat src_entry, tmp_entry, dst_patch, dst_patch_gray, src_patch;
 	vInt ids;
 	std::vector<cv::Point2i> locations;
 	for (int i = 0, n = mCoords.size(); i < n; i++)
@@ -180,14 +194,18 @@ void HexaMosaic::Create() {
 		cInt src_x = (loc.x * dx + ((loc.y % 2) * (dx / 2.0f)));
 		cv::Rect roi(src_x, src_y, mHexWidth, mHexHeight);
 		dst_patch = dst_img(roi);
+		dst_patch_gray = dst_img_gray(roi);
 		std::stringstream s;
 		s << best_id;
-		src_patch = cv::imread(mDatabaseDir + "img_" + s.str() + ".jpg");
+		src_patch = cv::imread(mDatabaseDir + IMAGE_PREFIX + s.str() + IMAGE_EXT);
 		src_patch.copyTo(dst_patch, mHexMask);
+		mHexMask.copyTo(dst_patch_gray, mHexMask);
 	}
 	std::cout << "[done]" << std::endl;
 
-	// TODO: anti-aliasing
+	// Anti-alias the image.
+	cv::Mat dst_binary;
+	cv::threshold(dst_img_gray, dst_binary, 0.0, 255.0, CV_THRESH_BINARY_INV);
 
 	// Write image to disk
 	int p = mDatabaseDir.substr(0, mDatabaseDir.size()-1).find_last_of('/') + 1;
@@ -202,33 +220,6 @@ void HexaMosaic::Create() {
 
 	cv::imwrite(s.str(), dst_img);
 	std::cout << "Resulting image: " << s.str() << std::endl;
-}
-
-void HexaMosaic::LoadDatabase(cv::Mat& outDatabase) {
-	std::cout << "Loading " << mNumImages << " images..." << std::flush;
-	cv::Mat roi, row;
-	outDatabase.create(mNumImages, mHexWidth*mHexHeight*3, CV_8UC1);
-	for (int i = 0; i < mNumImages; i++)
-	{
-		std::stringstream s;
-		s << i;
-		std::string entry = mDatabaseDir + IMAGE_PREFIX + s.str() + IMAGE_EXT;
-		row = cv::imread(entry, 1).reshape(1,1);
-		roi = outDatabase.row(i);
-		row.copyTo(roi);
-	}
-	std::cout << "[done]" << std::endl;
-}
-
-void HexaMosaic::CompressData(const cv::PCA& inPca, const cv::Mat& inUnCompressed, cv::Mat& outCompressed) {
-	outCompressed.create(inUnCompressed.rows, mDimensions, inPca.eigenvectors.type());
-	cv::Mat entry, compressed_entry;
-	for (int i = 0; i < inUnCompressed.rows; i++)
-	{
-		entry = inUnCompressed.row(i);
-		compressed_entry = outCompressed.row(i);
-		inPca.project(entry, compressed_entry);
-	}
 }
 
 bool HexaMosaic::InHexagon(cFloat inX, cFloat inY, cFloat inRadius) {
