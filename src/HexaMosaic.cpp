@@ -179,9 +179,6 @@ void HexaMosaic::Create() {
 		cInt src_y = (loc.y * dy);
 		cInt src_x = (loc.x * dx + ((loc.y % 2) * (dx / 2.0f)));
 		cv::Rect roi(src_x, src_y, mHexWidth, mHexHeight);
-//		cv::rectangle(dst_img, roi, cv::Scalar(255,255,255));
-//		cv::imshow("dst_img", dst_img);
-//		cv::waitKey();
 		dst_patch = dst_img(roi);
 		std::stringstream s;
 		s << best_id;
