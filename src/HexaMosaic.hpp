@@ -61,14 +61,6 @@ private:
 		cFloat inRadius
 		);
 
-	void DataRow(
-		cInt inX,
-		cInt inY,
-		const cv::Mat& inSrcImg,
-		const cv::Mat& inMask,
-		cv::Mat& outDataRow
-		);
-
 	String mSourceImage;
 	String mDatabaseDir;
 

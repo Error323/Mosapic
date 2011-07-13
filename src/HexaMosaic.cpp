@@ -190,22 +190,18 @@ void HexaMosaic::Create() {
 	// TODO: anti-aliasing
 
 	// Write image to disk
+	int p = mDatabaseDir.substr(0, mDatabaseDir.size()-1).find_last_of('/') + 1;
+	std::string database = mDatabaseDir.substr(p);
 	std::stringstream s;
 	s << "mosaic-" << mWidth << "x" << mHeight
-	  << "-pca" << mDimensions
-	  << "-hexdims"  << mHexWidth << "x" << mHexHeight
-	  << "-minradius" << mMinRadius
+	  << "-pca:" << mDimensions
+	  << "-hexdims:"  << mHexWidth << "x" << mHexHeight
+	  << "-minradius:" << mMinRadius
+	  << "-db:" << database.substr(0, database.size()-1)
 	  << ".jpg";
 
 	cv::imwrite(s.str(), dst_img);
 	std::cout << "Resulting image: " << s.str() << std::endl;
-}
-
-void HexaMosaic::DataRow(cInt inX, cInt inY, const cv::Mat &inSrcImg, const cv::Mat &inMask, cv::Mat &outDataRow) {
-	cv::Rect roi(inX, inY, inMask.cols, inMask.rows);
-	cv::Mat patch = inSrcImg(roi);
-	patch.copyTo(outDataRow, inMask);
-	outDataRow = outDataRow.reshape(1,1);
 }
 
 void HexaMosaic::LoadDatabase(cv::Mat& outDatabase) {
