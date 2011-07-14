@@ -9,6 +9,18 @@
 #include <iostream>
 #include <limits>
 
+#define COUNTER_START_VAL 10
+#define INIT_COUNTER(c) int c = COUNTER_START_VAL
+
+#define COUNT_DOWN(i, c, v)                           \
+	do {                                              \
+		if (i % (v/COUNTER_START_VAL) == 0 && c >= 0) \
+		{                                             \
+			std::cout << c << " " << std::flush;      \
+			c--;                                      \
+		}                                             \
+	} while(0)                                        \
+
 HexaMosaic::HexaMosaic(
 	rcString inSourceImage,
 	rcString inDatabase,
@@ -128,7 +140,7 @@ void HexaMosaic::Create() {
 
 	// Compress database image data
 	std::cout << "Compress database..." << std::flush;
-	int count_down = 10;
+	INIT_COUNTER(compress);
 	cv::Mat compressed_database(mNumImages, mDimensions, CV_32FC1);
 	for (int i = 0; i < mNumImages; i++)
 	{
@@ -138,13 +150,12 @@ void HexaMosaic::Create() {
 		entry = cv::imread(img_name, 1).reshape(1,1);
 		compressed_entry = compressed_database.row(i);
 		pca.project(entry, compressed_entry);
-		if (i % (mNumImages/10) == 0 && count_down >= 0)
-			std::cout << count_down-- << " " << std::flush;
+		COUNT_DOWN(i, compress, mNumImages);
 	}
 	std::cout << "[done]" << std::endl;
 
 	// Construct mosaic
-	count_down = 10;
+	INIT_COUNTER(mosaic);
 	std::cout << "Construct mosaic..." << std::flush;
 	dx = mHexRadius*unit_dx;
 	dy = mHexRadius*unit_dy;
@@ -211,10 +222,8 @@ void HexaMosaic::Create() {
 					cv::Scalar(255,0,255),
 					2);
 #endif // DEBUG
-		if (i % (mCoords.size()/10) == 0 && count_down >= 0)
-			std::cout << count_down-- << " " << std::flush;
+		COUNT_DOWN(i, mosaic, n);
 	}
-	std::cout << "[done]" << std::endl;
 
 	// Stich edges with neighbouring pixel on x-axis
 	cv::Mat dst_binary;
@@ -256,6 +265,7 @@ void HexaMosaic::Create() {
 	  << ".jpg";
 
 	cv::imwrite(s.str(), dst_img);
+	std::cout << "[done]" << std::endl;
 	std::cout << "Resulting image: " << s.str() << std::endl;
 }
 
