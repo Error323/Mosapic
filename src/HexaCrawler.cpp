@@ -5,7 +5,7 @@
 #include <sstream>
 
 void HexaCrawler::Crawl(rcString inSrcDir, rcString inDstDir, cInt inHexHeight) {
-	mDstDir    = inDstDir.at(inDstDir.size()-1) == '/' ? mDstDir : mDstDir + '/';
+	mDstDir    = inDstDir.at(inDstDir.size()-1) == '/' ? inDstDir : inDstDir + '/';
 	mHexHeight = inHexHeight;
 	mHexWidth  = roundf(mHexHeight/2.0f*HEXAGON_WIDTH);
 	mImgCount  = 0;
@@ -34,13 +34,17 @@ void HexaCrawler::Crawl(const boost::filesystem::path &inPath) {
 		try
 		{
 			if (boost::filesystem::is_directory(i->status()))
+			{
 				Crawl(i->path());
+			}
 			else 
-				if (boost::filesystem::is_regular_file(i->status()))
+			{
+				if (boost::filesystem::is_regular_file(i->status()) &&
+					boost::regex_match(i->path().leaf(), what, img_ext, boost::match_default))
 				{
-					if (boost::regex_match(i->path().leaf(), what, img_ext, boost::match_default))
-						Process(i->path().string());
+					Process(i->path().string());
 				}
+			}
 		}
 		catch (const std::exception &ex)
 		{
@@ -57,16 +61,18 @@ void HexaCrawler::Resize(cv::Mat& outImg) {
 	cv::Size size(width, height);
 	cv::Point2f center(outImg.cols/2, outImg.rows/2);
 	cv::getRectSubPix(outImg, size, center, img_tmp);
-	cv::resize(img_tmp, outImg, cv::Size(mHexWidth, mHexHeight));
+	cv::Mat img_tmp2;
+	cv::blur(img_tmp, img_tmp2, cv::Size(5,5));
+	cv::resize(img_tmp2, outImg, cv::Size(mHexWidth, mHexHeight));
 }
 
 void HexaCrawler::Process(rcString inImgName) {
-	std::cout << "Processing `" << inImgName << "'..." << std::flush;
+	std::cout << "Processing `" << inImgName << std::flush;
 
 	cv::Mat img_color = cv::imread(inImgName, 1);
 	if (img_color.data == NULL || img_color.rows < mHexHeight || img_color.cols < mHexHeight)
 	{
-		std::cout << "[failed]" << std::endl;
+		std::cout << " [failed]" << std::endl;
 		return;
 	}
 
@@ -74,7 +80,8 @@ void HexaCrawler::Process(rcString inImgName) {
 
 	std::stringstream s;
 	s << mImgCount;
-	cv::imwrite(mDstDir + IMAGE_PREFIX + s.str() + IMAGE_EXT, img_color);
+	std::string img_dst = mDstDir + IMAGE_PREFIX + s.str() + IMAGE_EXT;
+	cv::imwrite(img_dst, img_color);
 	mImgCount++;
-	std::cout << "[done]" << std::endl;
+	std::cout << " -> " << img_dst << " [done]" << std::endl;
 }

@@ -256,8 +256,10 @@ void HexaMosaic::Create() {
 	// Write image to disk
 	int p = mDatabaseDir.substr(0, mDatabaseDir.size()-1).find_last_of('/') + 1;
 	std::string database = mDatabaseDir.substr(p);
+	std::string source = mSourceImage.substr(mSourceImage.find_last_of('/') + 1, mSourceImage.find_last_of('.') - 1);
 	std::stringstream s;
-	s << "mosaic:" << mWidth << "x" << mHeight
+	s << "source:" << source
+	  << "-mosaic:" << mWidth << "x" << mHeight
 	  << "-pca:" << mDimensions
 	  << "-hexdims:"  << mHexWidth << "x" << mHexHeight
 	  << "-minradius:" << mMinRadius
