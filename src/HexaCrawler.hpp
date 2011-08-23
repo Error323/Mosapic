@@ -4,7 +4,8 @@
 #include "Types.hpp"
 #include <boost/filesystem.hpp>
 #include <boost/regex.hpp>
-#include <opencv2/opencv.hpp>
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
 
 DECLARE_CLASS(HexaCrawler)
 

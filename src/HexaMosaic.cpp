@@ -26,12 +26,14 @@ HexaMosaic::HexaMosaic(
 	rcString inDatabase,
 	cInt inWidth,
 	cInt inHeight,
+	cBool inGrayscale,
 	cInt inDimensions,
 	cInt inMinRadius
 	):
 	mSourceImage(inSourceImage),
 	mWidth(inWidth),
 	mHeight(inHeight),
+	mUseGrayscale(inGrayscale),
 	mDimensions(inDimensions),
 	mMinRadius(inMinRadius)
 {
@@ -82,16 +84,16 @@ void HexaMosaic::Create() {
 	cFloat unit_dy = HEXAGON_HEIGHT * (3.0f/4.0f);
 
 	// Load source image
-	cv::Mat src_img = cv::imread(mSourceImage, 1);
+	cv::Mat src_img = cv::imread(mSourceImage, (mUseGrayscale ? 0 : 1));
 	cv::Mat dst_img(mHeight*mHexHeight*.75+mHexHeight*.25+mHeight*.25,
 					mWidth*mHexWidth+mWidth*.25,
-					CV_8UC3);
+					(mUseGrayscale ? CV_8UC1 : CV_8UC3));
 	cv::Mat dst_img_gray(mHeight*mHexHeight*.75+mHexHeight*.25+mHeight*.25,
 					mWidth*mHexWidth+mWidth*.25,
 					CV_8UC1);
 
 	// Compute pca input data from source image
-	cv::Mat pca_input(mCoords.size(), mHexHeight*mHexWidth*3, CV_8UC1);
+	cv::Mat pca_input(mCoords.size(), mHexHeight*mHexWidth*(mUseGrayscale ? 1 : 3), CV_8UC1);
 	float dx = src_img.cols / float(mWidth);
 	float dy = src_img.rows / float(mHeight);
 	for (int i = 0, n = mCoords.size(); i < n; i++)
@@ -117,7 +119,7 @@ void HexaMosaic::Create() {
 	{
 		cv::Mat eigenvec;
 		cv::normalize(pca.eigenvectors.row(i), eigenvec, 255, 0, cv::NORM_MINMAX);
-		eigenvec = eigenvec.reshape(3, mHexHeight);
+		eigenvec = eigenvec.reshape((mUseGrayscale ? 1 : 3), mHexHeight);
 		std::stringstream s;
 		s << i;
 		std::string entry = "eigenvector-" + s.str() + ".jpg";
@@ -147,7 +149,7 @@ void HexaMosaic::Create() {
 		std::stringstream s;
 		s << i;
 		std::string img_name = mDatabaseDir + IMAGE_PREFIX + s.str() + IMAGE_EXT;
-		entry = cv::imread(img_name, 1).reshape(1,1);
+		entry = cv::imread(img_name, (mUseGrayscale ? 0 : 1)).reshape(1,1);
 		compressed_entry = compressed_database.row(i);
 		pca.project(entry, compressed_entry);
 		COUNT_DOWN(i, compress, mNumImages);
@@ -212,7 +214,7 @@ void HexaMosaic::Create() {
 		dst_patch_gray = dst_img_gray(roi);
 		std::stringstream s;
 		s << best_id;
-		src_patch = cv::imread(mDatabaseDir + IMAGE_PREFIX + s.str() + IMAGE_EXT);
+		src_patch = cv::imread(mDatabaseDir + IMAGE_PREFIX + s.str() + IMAGE_EXT, (mUseGrayscale ? 0 : 1));
 		src_patch.copyTo(dst_patch, mHexMask);
 		mHexMask.copyTo(dst_patch_gray, mHexMask);
 #ifdef DEBUG
@@ -243,8 +245,11 @@ void HexaMosaic::Create() {
 					if (dst_binary.at<Uint8>(y, x+idx[i]) == 0)
 					{
 						split[0].at<Uint8>(y, x) = split[0].at<Uint8>(y, x+idx[i]);
-						split[1].at<Uint8>(y, x) = split[1].at<Uint8>(y, x+idx[i]);
-						split[2].at<Uint8>(y, x) = split[2].at<Uint8>(y, x+idx[i]);
+						if (!mUseGrayscale)
+						{
+							split[1].at<Uint8>(y, x) = split[1].at<Uint8>(y, x+idx[i]);
+							split[2].at<Uint8>(y, x) = split[2].at<Uint8>(y, x+idx[i]);
+						}
 						break;
 					}
 				}
@@ -266,7 +271,8 @@ void HexaMosaic::Create() {
 	  << "-hexdims:"  << mHexWidth << "x" << mHexHeight
 	  << "-minradius:" << mMinRadius
 	  << "-db:" << database.substr(0, database.size()-1)
-	  << ".jpg";
+	  << "-grayscale:" << (mUseGrayscale ? "on" : "off")
+	  << IMAGE_EXT;
 
 	cv::imwrite(s.str(), dst_img);
 	std::cout << "[done]" << std::endl;

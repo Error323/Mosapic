@@ -62,7 +62,7 @@ void HexaCrawler::Resize(cv::Mat& outImg) {
 	cv::Point2f center(outImg.cols/2, outImg.rows/2);
 	cv::getRectSubPix(outImg, size, center, img_tmp);
 	cv::Mat img_tmp2;
-	cv::blur(img_tmp, img_tmp2, cv::Size(5,5));
+	cv::blur(img_tmp, img_tmp2, cv::Size(3,3));
 	cv::resize(img_tmp2, outImg, cv::Size(mHexWidth, mHexHeight));
 }
 

@@ -2,7 +2,8 @@
 #define HEXAMOSAIC_HDR
 
 #include <string>
-#include <opencv2/opencv.hpp>
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
 #include "Types.hpp"
 
 DECLARE_CLASS(HexaMosaic)
@@ -23,6 +24,7 @@ public:
 		rcString inDatabase,
 		cInt inWidth,
 		cInt inHeight,
+		cBool inGrayscale,
 		cInt inDimensions,
 		cInt inMaxRadius
 		);
@@ -56,6 +58,7 @@ private:
 
 	int mWidth;
 	int mHeight;
+	bool mUseGrayscale;
 	int mDimensions;
 	int mMinRadius;
 	int mNumImages;
