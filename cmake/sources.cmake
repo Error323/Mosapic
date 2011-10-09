@@ -2,7 +2,7 @@
 # Source listing
 #-------------------------------------------------------------------------------
 
-SET(HEXAPIC_SOURCE
+SET(Hexapic_SOURCE
 	src/Hexapic.cpp
 	src/HexaMosaic.cpp
 	src/HexaCrawler.cpp

@@ -1,7 +1,7 @@
 #ifdef DEBUG
-	#define NAME   "Hexapic (debug)"
+  #define NAME   "@CMAKE_PROJECT_NAME@ (debug)"
 #else
-	#define NAME   "Hexapic"
+  #define NAME   "@CMAKE_PROJECT_NAME@"
 #endif
 #define VERSION    "@VERSION@"
 #define HUMAN_NAME NAME " v" VERSION " (" __DATE__ ")"

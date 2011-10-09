@@ -1,16 +1,17 @@
-PROJECT(HEXAPIC)
+PROJECT(Hexapic)
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
+
 
 #-------------------------------------------------------------------------------
 # General Settings
-# NOTE: -O2 breaks rendering without -fno-strict-aliasing
-# NOTE: we need -rdynamic for backtrace() to work properly
+# NOTE: We need -rdynamic for backtrace() to work properly
 #-------------------------------------------------------------------------------
 SET(CMAKE_COLOR_MAKEFILE ON)
 SET(CMAKE_CXX_FLAGS "-Wall -Wextra")
 SET(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -rdynamic -DDEBUG")
 SET(CMAKE_CXX_FLAGS_RELEASE "-O2")
 SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g -rdynamic -DDEBUG")
+
 
 #-------------------------------------------------------------------------------
 # Extract and set the version
@@ -29,8 +30,8 @@ ELSE(NOT GIT_VERSION)
 ENDIF(GIT_VERSION)
 
 CONFIGURE_FILE(
-	"${HEXAPIC_SOURCE_DIR}/cmake/Version.hpp.in"
-	"${HEXAPIC_BINARY_DIR}/Version.hpp"
+	"${Hexapic_SOURCE_DIR}/cmake/Version.hpp.in"
+	"${Hexapic_BINARY_DIR}/Version.hpp"
 )
 
 
@@ -38,7 +39,7 @@ CONFIGURE_FILE(
 # Include sources
 #-------------------------------------------------------------------------------
 INCLUDE(cmake/sources.cmake)
-INCLUDE_DIRECTORIES(${HEXAPIC_BINARY_DIR})
+INCLUDE_DIRECTORIES(${Hexapic_BINARY_DIR})
 
 
 #-------------------------------------------------------------------------------
@@ -56,9 +57,9 @@ INCLUDE_DIRECTORIES(
 #-------------------------------------------------------------------------------
 # Define executable and link libraries
 #-------------------------------------------------------------------------------
-ADD_EXECUTABLE(hexapic ${HEXAPIC_SOURCE})
+ADD_EXECUTABLE(${CMAKE_PROJECT_NAME} ${Hexapic_SOURCE})
 
-TARGET_LINK_LIBRARIES(hexapic
+TARGET_LINK_LIBRARIES(${CMAKE_PROJECT_NAME}
 	${Boost_LIBRARIES}
 	${OpenCV_LIBS}
 )
