@@ -37,7 +37,7 @@ CONFIGURE_FILE(
 #-------------------------------------------------------------------------------
 # Include sources
 #-------------------------------------------------------------------------------
-INCLUDE(cmake/sources.list)
+INCLUDE(cmake/sources.cmake)
 INCLUDE_DIRECTORIES(${HEXAPIC_BINARY_DIR})
 
 

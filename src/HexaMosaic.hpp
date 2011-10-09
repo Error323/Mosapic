@@ -17,60 +17,63 @@ DECLARE_CLASS(HexaMosaic)
 #define IMAGE_PREFIX		"img_"
 #define IMAGE_EXT			".jpg"
 
-class HexaMosaic {
+class HexaMosaic
+{
 public:
-	HexaMosaic(
-		rcString inSourceImage,
-		rcString inDatabase,
-		cInt inWidth,
-		cInt inHeight,
-		cBool inGrayscale,
-		cInt inDimensions,
-		cInt inMaxRadius
-		);
+  HexaMosaic(
+    rcString inSourceImage,
+    rcString inDatabase,
+    cInt inWidth,
+    cInt inHeight,
+    cBool inGrayscale,
+    cInt inDimensions,
+    cInt inMaxRadius
+  );
 
-	void Create();
-	
+  void Create();
+
 private:
-	struct Match {
-		Match(): id(-1), val(-1.0f) {}
-		Match(int pid, float v): id(pid), val(v) {}
-		int id;
-		float val;
-		bool operator< (const Match& m) const {
-			return val > m.val;
-		}
-	};
+  struct Match
+  {
+    Match(): id(-1), val(-1.0f) {}
+    Match(int pid, float v): id(pid), val(v) {}
+    int id;
+    float val;
+    bool operator< (const Match &m) const
+    {
+      return val > m.val;
+    }
+  };
 
-	float GetDistance(
-		const cv::Mat& inSrcRow,
-		const cv::Mat& inDataRow
-		);
+  float GetDistance(
+    const cv::Mat &inSrcRow,
+    const cv::Mat &inDataRow
+  );
 
-	bool InHexagon(
-		cFloat inX,
-		cFloat inY,
-		cFloat inRadius
-		);
+  bool InHexagon(
+    cFloat inX,
+    cFloat inY,
+    cFloat inRadius
+  );
 
-	String mSourceImage;
-	String mDatabaseDir;
+  String mSourceImage;
+  String mDatabaseDir;
 
-	int mWidth;
-	int mHeight;
-	bool mUseGrayscale;
-	int mDimensions;
-	int mMinRadius;
-	int mNumImages;
-	int mHexWidth;
-	int mHexHeight;
-	int mHexRadius;
+  int mWidth;
+  int mHeight;
+  bool mUseGrayscale;
+  int mDimensions;
+  int mMinRadius;
+  int mNumImages;
+  int mHexWidth;
+  int mHexHeight;
+  int mHexRadius;
 
-	cv::Mat mDatabase;
-	cv::Mat mHexMask;
+  cv::Mat mDatabase;
+  cv::Mat mHexMask;
 
-	std::vector<cv::Point2i> mCoords;
-	std::vector<int> mIndices;
+  std::vector<cv::Point2i> mCoords;
+  std::vector<int> mIndices;
 };
 
 #endif // HEXAMOSAIC_HDR
