@@ -1,7 +1,7 @@
 #ifdef DEBUG
-  #define NAME   "@CMAKE_PROJECT_NAME@ (debug)"
+  #define NAME "@CMAKE_PROJECT_NAME@ (debug)"
 #else
-  #define NAME   "@CMAKE_PROJECT_NAME@"
+  #define NAME "@CMAKE_PROJECT_NAME@"
 #endif
-#define VERSION    "@VERSION@"
+#define VERSION "@VERSION@"
 #define HUMAN_NAME NAME " v" VERSION " (" __DATE__ ")"

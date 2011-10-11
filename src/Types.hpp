@@ -4,7 +4,7 @@
 #include <vector>
 #include <string>
 
-#define DECLARE_HUNGARIAN(TYPE)                          \
+#define DECLARE_HUNGARIAN(TYPE)                        \
 	typedef       TYPE*                     p##TYPE;     \
 	typedef       TYPE&                     r##TYPE;     \
 	typedef const TYPE                      c##TYPE;     \
@@ -27,11 +27,11 @@
 	typedef const std::vector<TYPE*>&       rcvp##TYPE;  \
 	typedef const std::vector<const TYPE*>& rcvpc##TYPE;
 
-#define DECLARE_CLASS(CLS)                               \
+#define DECLARE_CLASS(CLS)                             \
 	class CLS;                                           \
 	DECLARE_HUNGARIAN(CLS)
 
-#define DECLARE_STRUCT(STR)                              \
+#define DECLARE_STRUCT(STR)                            \
 	struct STR;                                          \
 	DECLARE_HUNGARIAN(STR)
 

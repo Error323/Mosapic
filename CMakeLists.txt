@@ -63,3 +63,9 @@ TARGET_LINK_LIBRARIES(${CMAKE_PROJECT_NAME}
 	${Boost_LIBRARIES}
 	${OpenCV_LIBS}
 )
+
+
+#-------------------------------------------------------------------------------
+# Status report
+#-------------------------------------------------------------------------------
+MESSAGE(STATUS " Compiling mode is '${CMAKE_BUILD_TYPE}'")

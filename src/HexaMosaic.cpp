@@ -46,8 +46,12 @@ HexaMosaic::HexaMosaic(
 {
   mDatabaseDir = inDatabase.at(inDatabase.size() - 1) == '/' ? inDatabase : inDatabase + '/';
   Crawl(mDatabaseDir);
+
+  ASSERT_MSG(!mImages.empty(), "Database %s doens't contain images",
+             mDatabaseDir.c_str());
   cv::Mat first = cv::imread(mImages.front());
-  ASSERT(first.data != NULL && first.rows == first.cols && first.rows > 0);
+  ASSERT_MSG(first.data != NULL && first.rows == first.cols && first.rows > 0,
+             "First image %s is not valid", mImages.front().c_str());
 
   mHexHeight = first.rows;
   mHexRadius = mHexHeight / 2.0f;
@@ -313,7 +317,7 @@ void HexaMosaic::Create()
     << "-minradius:" << mMinRadius
     << "-db:" << database.substr(0, database.size() - 1)
     << "-grayscale:" << (mUseGrayscale ? "on" : "off")
-    << IMAGE_EXT;
+    << ".jpg";
 
   cv::imwrite(s.str(), dst_img);
   std::cout << "[done]" << std::endl;

@@ -10,9 +10,6 @@
 
 DECLARE_CLASS(HexaMosaic)
 
-#define IMAGE_PREFIX  "img_"
-#define IMAGE_EXT     ".jpg"
-
 class HexaMosaic
 {
 public:
