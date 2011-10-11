@@ -20,10 +20,8 @@ public:
 
 private:
   int mImgCount;
-  int mHexWidth;
-  int mHexHeight;
+  int mTileSize;
   String mDstDir;
-  cv::FileStorage fs;
 
   void Crawl(const boost::filesystem::path &inPath);
   void Process(rcString inImgName);

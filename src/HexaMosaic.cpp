@@ -8,18 +8,24 @@
 #include <sstream>
 #include <iostream>
 #include <limits>
+#include <opencv/highgui.h>
+
+// Unit hexagon (i.e. edge length = 1) with its corners facing north and south
+#define HALF_HEXAGON_WIDTH sinf(M_PI / 3.0f)
+#define HEXAGON_WIDTH      (2.0f * HALF_HEXAGON_WIDTH)
+#define HEXAGON_HEIGHT     2.0f
 
 #define COUNTER_START_VAL 10
 #define INIT_COUNTER(c) int c = COUNTER_START_VAL
 
-#define COUNT_DOWN(i, c, v)                           \
-	do {                                              \
+#define COUNT_DOWN(i, c, v)                       \
+  do {                                            \
 		if (i % (v/COUNTER_START_VAL) == 0 && c >= 0) \
 		{                                             \
-			std::cout << c << " " << std::flush;      \
-			c--;                                      \
+      std::cout << c << " " << std::flush;        \
+      c--;                                        \
 		}                                             \
-	} while(0)                                        \
+  } while(0)                                      \
  
 HexaMosaic::HexaMosaic(
   rcString inSourceImage,
@@ -35,15 +41,17 @@ HexaMosaic::HexaMosaic(
   mHeight(inHeight),
   mUseGrayscale(inGrayscale),
   mDimensions(inDimensions),
-  mMinRadius(inMinRadius)
+  mMinRadius(inMinRadius),
+  mNumImages(0)
 {
   mDatabaseDir = inDatabase.at(inDatabase.size() - 1) == '/' ? inDatabase : inDatabase + '/';
-  cv::FileStorage fs(mDatabaseDir + DATABASE_NAME, cv::FileStorage::READ);
-  fs["num_images"] >> mNumImages;
-  fs["hex_width"] >> mHexWidth;
-  fs["hex_height"] >> mHexHeight;
-  fs.release();
+  Crawl(mDatabaseDir);
+  cv::Mat first = cv::imread(mImages.front());
+  ASSERT(first.data != NULL && first.rows == first.cols && first.rows > 0);
+
+  mHexHeight = first.rows;
   mHexRadius = mHexHeight / 2.0f;
+  mHexWidth  = roundf(mHexRadius * HEXAGON_WIDTH);
 
   // Cache coordinates, so we can e.g. randomize
   for (int y = 0; y < mHeight; y++)
@@ -154,13 +162,14 @@ void HexaMosaic::Create()
   std::cout << "Compress database..." << std::flush;
   INIT_COUNTER(compress);
   cv::Mat compressed_database(mNumImages, mDimensions, CV_32FC1);
-
+  cv::Mat img;
   for (int i = 0; i < mNumImages; i++)
   {
-    std::stringstream s;
-    s << i;
-    std::string img_name = mDatabaseDir + IMAGE_PREFIX + s.str() + IMAGE_EXT;
-    entry = cv::imread(img_name, (mUseGrayscale ? 0 : 1)).reshape(1, 1);
+    img = cv::imread(mImages[i], (mUseGrayscale ? 0 : 1));
+
+    cv::getRectSubPix(img, cv::Size(mHexWidth, mHexHeight),
+                      cv::Point2f(img.cols/2.0f, img.rows/2.0f), entry);
+    entry = entry.reshape(1,1);
     compressed_entry = compressed_database.row(i);
     pca.project(entry, compressed_entry);
     COUNT_DOWN(i, compress, mNumImages);
@@ -236,13 +245,14 @@ void HexaMosaic::Create()
     cv::Rect roi(src_x, src_y, mHexWidth, mHexHeight);
     dst_patch = dst_img(roi);
     dst_patch_gray = dst_img_gray(roi);
-    std::stringstream s;
-    s << best_id;
-    src_patch = cv::imread(mDatabaseDir + IMAGE_PREFIX + s.str() + IMAGE_EXT, (mUseGrayscale ? 0 : 1));
-    src_patch.copyTo(dst_patch, mHexMask);
+    src_patch = cv::imread(mImages[best_id], (mUseGrayscale ? 0 : 1));
+    cv::getRectSubPix(src_patch, cv::Size(mHexWidth, mHexHeight),
+                      cv::Point2f(src_patch.cols/2.0f, src_patch.rows/2.0f), entry);
+    entry.copyTo(dst_patch, mHexMask);
     mHexMask.copyTo(dst_patch_gray, mHexMask);
 #ifdef DEBUG
-    cv::putText(dst_img, s.str(),
+    std::string img_name = mImages[best_id].substr(mImages[best_id].find_last_of('/')+1);
+    cv::putText(dst_img, img_name,
                 cv::Point(src_x + dx / 3.0f, src_y + dy / 1.5f),
                 CV_FONT_HERSHEY_PLAIN, 2.0,
                 cv::Scalar(255, 0, 255),
@@ -308,6 +318,43 @@ void HexaMosaic::Create()
   cv::imwrite(s.str(), dst_img);
   std::cout << "[done]" << std::endl;
   std::cout << "Resulting image: " << s.str() << std::endl;
+}
+
+void HexaMosaic::Crawl(const boost::filesystem::path &inPath)
+{
+  static boost::match_results<std::string::const_iterator> what;
+  static boost::regex img_ext(".*(bmp|BMP|jpg|JPG|jpeg|JPEG|png|PNG)");
+
+  boost::filesystem::directory_iterator n;
+
+  for (boost::filesystem::directory_iterator i(inPath); i != n; ++i)
+  {
+    try
+    {
+      if (boost::filesystem::is_directory(i->status()))
+      {
+        Crawl(i->path());
+      }
+      else
+      {
+        if (boost::filesystem::is_regular_file(i->status()) &&
+            boost::regex_match(i->path().leaf(), what, img_ext, boost::match_default))
+        {
+          Process(i->path().string());
+        }
+      }
+    }
+    catch (const std::exception &ex)
+    {
+      std::cerr << i->path() << " " << ex.what() << std::endl;
+    }
+  }
+}
+
+void HexaMosaic::Process(rcString inImgName)
+{
+  mImages.push_back(inImgName);
+  mNumImages++;
 }
 
 bool HexaMosaic::InHexagon(cFloat inX, cFloat inY, cFloat inRadius)

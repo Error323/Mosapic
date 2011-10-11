@@ -4,12 +4,11 @@
 #include <iostream>
 #include <sstream>
 
-void HexaCrawler::Crawl(rcString inSrcDir, rcString inDstDir, cInt inHexHeight)
+void HexaCrawler::Crawl(rcString inSrcDir, rcString inDstDir, cInt inTileSize)
 {
-  mDstDir    = inDstDir.at(inDstDir.size() - 1) == '/' ? inDstDir : inDstDir + '/';
-  mHexHeight = inHexHeight;
-  mHexWidth  = roundf(mHexHeight / 2.0f * HEXAGON_WIDTH);
-  mImgCount  = 0;
+  mDstDir   = inDstDir.at(inDstDir.size() - 1) == '/' ? inDstDir : inDstDir + '/';
+  mTileSize = inTileSize;
+  mImgCount = 0;
 
   if (!boost::filesystem::exists(inDstDir))
   {
@@ -18,11 +17,6 @@ void HexaCrawler::Crawl(rcString inSrcDir, rcString inDstDir, cInt inHexHeight)
   }
 
   Crawl(inSrcDir);
-  fs.open(mDstDir + DATABASE_NAME, cv::FileStorage::WRITE);
-  fs << "num_images" << mImgCount;
-  fs << "hex_width" << mHexWidth;
-  fs << "hex_height" << mHexHeight;
-  fs.release();
   std::cout << std::endl << "Processed " << mImgCount << " images." << std::endl;
 }
 
@@ -60,24 +54,24 @@ void HexaCrawler::Crawl(const boost::filesystem::path &inPath)
 void HexaCrawler::Resize(cv::Mat &outImg)
 {
   int min = std::min<int>(outImg.rows, outImg.cols);
-  int width  = min - (min % mHexWidth);
-  int height = min - (min % mHexHeight);
-  cv::Mat img_tmp;
+  int width  = min - (min % mTileSize);
+  int height = min - (min % mTileSize);
+  cv::Mat img_sub;
   cv::Size size(width, height);
   cv::Point2f center(outImg.cols / 2, outImg.rows / 2);
-  cv::getRectSubPix(outImg, size, center, img_tmp);
-  cv::Mat img_tmp2;
-  cv::blur(img_tmp, img_tmp2, cv::Size(3, 3));
-  cv::resize(img_tmp2, outImg, cv::Size(mHexWidth, mHexHeight));
+  cv::getRectSubPix(outImg, size, center, img_sub);
+  cv::Mat img_sub_blur;
+  cv::blur(img_sub, img_sub_blur, cv::Size(3, 3));
+  cv::resize(img_sub_blur, outImg, cv::Size(mTileSize, mTileSize));
 }
 
 void HexaCrawler::Process(rcString inImgName)
 {
   std::cout << "Processing `" << inImgName << std::flush;
 
-  cv::Mat img_color = cv::imread(inImgName, 1);
+  cv::Mat img_color = cv::imread(inImgName);
 
-  if (img_color.data == NULL || img_color.rows < mHexHeight || img_color.cols < mHexHeight)
+  if (img_color.data == NULL || img_color.rows < mTileSize || img_color.cols < mTileSize)
   {
     std::cout << " [failed]" << std::endl;
     return;
@@ -85,9 +79,7 @@ void HexaCrawler::Process(rcString inImgName)
 
   Resize(img_color);
 
-  std::stringstream s;
-  s << mImgCount;
-  std::string img_dst = mDstDir + IMAGE_PREFIX + s.str() + IMAGE_EXT;
+  std::string img_dst = mDstDir + inImgName.substr(inImgName.find_last_of('/')+1);
   cv::imwrite(img_dst, img_color);
   mImgCount++;
   std::cout << " -> " << img_dst << " [done]" << std::endl;

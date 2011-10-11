@@ -2,20 +2,16 @@
 #define HEXAMOSAIC_HDR
 
 #include <string>
+#include <boost/filesystem.hpp>
+#include <boost/regex.hpp>
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 #include "Types.hpp"
 
 DECLARE_CLASS(HexaMosaic)
 
-// Unit hexagon (i.e. edge length = 1) with its corners facing north and south
-#define HALF_HEXAGON_WIDTH	sinf(M_PI / 3.0f)
-#define HEXAGON_WIDTH		(2.0f * HALF_HEXAGON_WIDTH)
-#define HEXAGON_HEIGHT		2.0f
-
-#define DATABASE_NAME		"meta.yml"
-#define IMAGE_PREFIX		"img_"
-#define IMAGE_EXT			".jpg"
+#define IMAGE_PREFIX  "img_"
+#define IMAGE_EXT     ".jpg"
 
 class HexaMosaic
 {
@@ -56,6 +52,9 @@ private:
     cFloat inRadius
   );
 
+  void Crawl(const boost::filesystem::path &inPath);
+  void Process(rcString inImgName);
+
   String mSourceImage;
   String mDatabaseDir;
 
@@ -73,7 +72,8 @@ private:
   cv::Mat mHexMask;
 
   std::vector<cv::Point2i> mCoords;
-  std::vector<int> mIndices;
+  vInt mIndices;
+  vString mImages;
 };
 
 #endif // HEXAMOSAIC_HDR
