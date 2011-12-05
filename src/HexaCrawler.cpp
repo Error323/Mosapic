@@ -6,7 +6,10 @@
 
 void HexaCrawler::Crawl(rcString inSrcDir, rcString inDstDir, cInt inTileSize)
 {
-  mDstDir   = inDstDir.at(inDstDir.size() - 1) == '/' ? inDstDir : inDstDir + '/';
+  char c = inDstDir.at(inDstDir.size()-1);
+  mDstDir = inDstDir;
+  if (c != '/')
+    mDstDir += "/";
   mTileSize = inTileSize;
   mImgCount = 0;
 
@@ -38,7 +41,7 @@ void HexaCrawler::Crawl(const boost::filesystem::path &inPath)
       else
       {
         if (boost::filesystem::is_regular_file(i->status()) &&
-            boost::regex_match(i->path().leaf(), what, img_ext, boost::match_default))
+            boost::regex_match(i->path().string(), what, img_ext, boost::match_default))
         {
           Process(i->path().string());
         }

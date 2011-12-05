@@ -44,11 +44,9 @@
         }                                                                             \
     } while (0)
 
-#define FATAL(...)                           \
-    do {                                     \
-        char buffer[2048];                   \
-        snprintf(buffer, 2048, __VA_ARGS__); \
-        fprintf(stderr, buffer);             \
+#define FATAL(...)                    \
+    do {                              \
+        fprintf(stderr, __VA_ARGS__); \
     } while (0)
 
 #else // DEBUG

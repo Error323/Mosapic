@@ -7,7 +7,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 # NOTE: We need -rdynamic for backtrace() to work properly
 #-------------------------------------------------------------------------------
 SET(CMAKE_COLOR_MAKEFILE ON)
-SET(CMAKE_CXX_FLAGS "-Wall -Wextra")
+SET(CMAKE_CXX_FLAGS "-Wall -Wextra -Werror")
 SET(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -rdynamic -DDEBUG")
 SET(CMAKE_CXX_FLAGS_RELEASE "-O2")
 SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g -rdynamic -DDEBUG")
@@ -45,7 +45,7 @@ INCLUDE_DIRECTORIES(${Hexapic_BINARY_DIR})
 #-------------------------------------------------------------------------------
 # Find 3rd party libraries and include their headers
 #-------------------------------------------------------------------------------
-FIND_PACKAGE(Boost COMPONENTS filesystem regex program_options REQUIRED)
+FIND_PACKAGE(Boost COMPONENTS system filesystem regex program_options REQUIRED)
 FIND_PACKAGE(OpenCV REQUIRED)
 
 INCLUDE_DIRECTORIES(

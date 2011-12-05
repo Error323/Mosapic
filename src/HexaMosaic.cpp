@@ -342,7 +342,7 @@ void HexaMosaic::Crawl(const boost::filesystem::path &inPath)
       else
       {
         if (boost::filesystem::is_regular_file(i->status()) &&
-            boost::regex_match(i->path().leaf(), what, img_ext, boost::match_default))
+            boost::regex_match(i->path().string(), what, img_ext, boost::match_default))
         {
           Process(i->path().string());
         }
