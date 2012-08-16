@@ -9,7 +9,7 @@ RAD=12
 
 for IMG in ${INPUTDIR}*
 do
-    cmd="./hexapic --input-image=${IMG} --database=${DATABASE} --width=${WIDTH} --height=${HEIGHT} --dimensions=${DIM} --min-radius=${RAD}"
+    cmd="./Hexapic --input-image=${IMG} --database=${DATABASE} --width=${WIDTH} --height=${HEIGHT} --dimensions=${DIM} --min-radius=${RAD}"
 
     echo ""
     echo ${cmd}
