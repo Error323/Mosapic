@@ -51,6 +51,7 @@ private:
 
   void Crawl(const boost::filesystem::path &inPath);
   void Process(rcString inImgName);
+	void ColorBalance(cv::Mat &ioSrc, const cv::Mat &inDst);
 
   String mSourceImage;
   String mDatabaseDir;

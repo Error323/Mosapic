@@ -20,11 +20,11 @@
 
 #define COUNT_DOWN(i, c, v)                       \
   do {                                            \
-		if (i % (v/COUNTER_START_VAL) == 0 && c >= 0) \
-		{                                             \
+    if (i % (v/COUNTER_START_VAL) == 0 && c >= 0) \
+    {                                             \
       std::cout << c << " " << std::flush;        \
       c--;                                        \
-		}                                             \
+    }                                             \
   } while(0)                                      \
  
 HexaMosaic::HexaMosaic(
@@ -49,7 +49,7 @@ HexaMosaic::HexaMosaic(
 
   ASSERT_MSG(!mImages.empty(), "Database %s doens't contain images",
              mDatabaseDir.c_str());
-  cv::Mat first = cv::imread(mImages.front());
+  cv::Mat first = cv::imread(mImages.front(), (mUseGrayscale ? 0 : 1));
   ASSERT_MSG(first.data != NULL && first.rows == first.cols && first.rows > 0,
              "First image %s is not valid", mImages.front().c_str());
 
@@ -250,6 +250,7 @@ void HexaMosaic::Create()
     dst_patch = dst_img(roi);
     dst_patch_gray = dst_img_gray(roi);
     src_patch = cv::imread(mImages[best_id], (mUseGrayscale ? 0 : 1));
+    ColorBalance(src_patch, pca_input.row(mIndices[i]));
     cv::getRectSubPix(src_patch, cv::Size(mHexWidth, mHexHeight),
                       cv::Point2f(src_patch.cols/2.0f, src_patch.rows/2.0f), entry);
     entry.copyTo(dst_patch, mHexMask);
@@ -353,6 +354,28 @@ void HexaMosaic::Crawl(const boost::filesystem::path &inPath)
       std::cerr << i->path() << " " << ex.what() << std::endl;
     }
   }
+}
+
+void HexaMosaic::ColorBalance(cv::Mat &ioSrc, const cv::Mat &inDst)
+{
+  cv::Mat dst_lab = inDst.reshape(3, mHexHeight);
+  cvtColor(dst_lab, dst_lab, CV_RGB2Lab);
+  cv::Scalar dst_lab_mean = cv::mean(dst_lab, mHexMask);
+
+  cv::Mat src_lab; 
+  cvtColor(ioSrc, src_lab, CV_RGB2Lab);
+  cv::Scalar src_lab_mean = cv::mean(src_lab);
+  
+  // Calculate deltas
+  cv::Scalar deltas;
+  for (int i = 0; i < 3; i++)
+    deltas[i] = dst_lab_mean[i] - src_lab_mean[i];
+  
+  // Translate X,Y by deltas
+  cv::add(src_lab, deltas, src_lab);
+
+  // X,Y to rgb
+  cvtColor(src_lab, ioSrc, CV_Lab2RGB);
 }
 
 void HexaMosaic::Process(rcString inImgName)
