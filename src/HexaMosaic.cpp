@@ -364,7 +364,7 @@ void HexaMosaic::ColorBalance(cv::Mat &ioSrc, const cv::Mat &inDst)
 
   cv::Mat src_lab; 
   cvtColor(ioSrc, src_lab, CV_RGB2Lab);
-  cv::Scalar src_lab_mean = cv::mean(src_lab);
+  cv::Scalar src_lab_mean = cv::mean(src_lab, mHexMask);
   
   // Calculate deltas
   cv::Scalar deltas;
