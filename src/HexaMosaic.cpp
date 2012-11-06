@@ -47,11 +47,11 @@ HexaMosaic::HexaMosaic(
   mDatabaseDir = inDatabase.at(inDatabase.size() - 1) == '/' ? inDatabase : inDatabase + '/';
   Crawl(mDatabaseDir);
 
-  ASSERT_MSG(!mImages.empty(), "Database %s doens't contain images",
+  ASSERT_MSG(!mImages.empty(), "Database `%s' doesn't contain images",
              mDatabaseDir.c_str());
   cv::Mat first = cv::imread(mImages.front(), (mUseGrayscale ? 0 : 1));
   ASSERT_MSG(first.data != NULL && first.rows == first.cols && first.rows > 0,
-             "First image %s is not valid", mImages.front().c_str());
+             "First image `%s' is not valid", mImages.front().c_str());
 
   mHexHeight = first.rows;
   mHexRadius = mHexHeight / 2.0f;
@@ -63,9 +63,7 @@ HexaMosaic::HexaMosaic(
     for (int x = 0; x < mWidth; x++)
     {
       if (y % 2 == 1 && x == mWidth - 1)
-      {
         continue;
-      }
 
       mIndices.push_back(mCoords.size());
       mCoords.push_back(cv::Point2i(x, y));
@@ -211,9 +209,7 @@ void HexaMosaic::Create()
     {
       // Stop if the image is new
       if (find(ids.begin(), ids.end(), best_id) == ids.end())
-      {
         break;
-      }
 
       // Stop if the image has no duplicates in a certain radius
       bool is_used = false;
@@ -232,9 +228,7 @@ void HexaMosaic::Create()
       }
 
       if (!is_used)
-      {
         break;
-      }
 
       KNN.pop();
       best_id = KNN.top().id;
@@ -364,7 +358,7 @@ void HexaMosaic::ColorBalance(cv::Mat &ioSrc, const cv::Mat &inDst)
 
   cv::Mat src_lab; 
   cvtColor(ioSrc, src_lab, CV_RGB2Lab);
-  cv::Scalar src_lab_mean = cv::mean(src_lab, mHexMask);
+  cv::Scalar src_lab_mean = cv::mean(src_lab);
   
   // Calculate deltas
   cv::Scalar deltas;

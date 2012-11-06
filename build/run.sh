@@ -2,8 +2,8 @@
 
 INPUTDIR=$1
 DATABASE=$2
-WIDTH=30
-HEIGHT=25
+WIDTH=20
+HEIGHT=14
 DIM=16
 RAD=12
 
@@ -16,4 +16,4 @@ do
     ${cmd}
 done
 
-#zip tessa.zip *.jpg
+zip results.zip *.jpg
