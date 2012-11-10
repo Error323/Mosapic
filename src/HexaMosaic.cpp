@@ -18,14 +18,14 @@
 #define COUNTER_START_VAL 10
 #define INIT_COUNTER(c) int c = COUNTER_START_VAL
 
-#define COUNT_DOWN(i, c, v)                       \
-  do {                                            \
-    if (i % (v/COUNTER_START_VAL) == 0 && c >= 0) \
-    {                                             \
-      std::cout << c << " " << std::flush;        \
-      c--;                                        \
-    }                                             \
-  } while(0)                                      \
+#define COUNT_DOWN(i, c, v)                     \
+  do {                                          \
+  if (i % (v/COUNTER_START_VAL) == 0 && c >= 0) \
+{                                               \
+  std::cout << c << " " << std::flush;          \
+  c--;                                          \
+  }                                             \
+  } while(0)                                    \
  
 HexaMosaic::HexaMosaic(
   rcString inSourceImage,
@@ -104,11 +104,11 @@ void HexaMosaic::Create()
                   mWidth * mHexWidth + mWidth * .25,
                   (mUseGrayscale ? CV_8UC1 : CV_8UC3));
   cv::Mat dst_img_gray(mHeight * mHexHeight * .75 + mHexHeight * .25 + mHeight * .25,
-      mWidth * mHexWidth + mWidth * .25,
-      CV_8UC1);
+                       mWidth * mHexWidth + mWidth * .25,
+                       CV_8UC1);
 
   // Compute pca input data from source image
-  cv::Mat pca_input(mCoords.size(), mHexHeight * mHexWidth*(mUseGrayscale ? 1 : 3), CV_8UC1);
+  cv::Mat pca_input(mCoords.size(), mHexHeight * mHexWidth * (mUseGrayscale ? 1 : 3), CV_8UC1);
   float dx = src_img.cols / float(mWidth);
   float dy = src_img.rows / float(mHeight);
 
@@ -165,13 +165,14 @@ void HexaMosaic::Create()
   INIT_COUNTER(compress);
   cv::Mat compressed_database(mNumImages, mDimensions, CV_32FC1);
   cv::Mat img;
+
   for (int i = 0; i < mNumImages; i++)
   {
     img = cv::imread(mImages[i], (mUseGrayscale ? 0 : 1));
 
     cv::getRectSubPix(img, cv::Size(mHexWidth, mHexHeight),
-                      cv::Point2f(img.cols/2.0f, img.rows/2.0f), entry);
-    entry = entry.reshape(1,1);
+                      cv::Point2f(img.cols / 2.0f, img.rows / 2.0f), entry);
+    entry = entry.reshape(1, 1);
     compressed_entry = compressed_database.row(i);
     pca.project(entry, compressed_entry);
     COUNT_DOWN(i, compress, mNumImages);
@@ -246,11 +247,11 @@ void HexaMosaic::Create()
     src_patch = cv::imread(mImages[best_id], (mUseGrayscale ? 0 : 1));
     ColorBalance(src_patch, pca_input.row(mIndices[i]));
     cv::getRectSubPix(src_patch, cv::Size(mHexWidth, mHexHeight),
-                      cv::Point2f(src_patch.cols/2.0f, src_patch.rows/2.0f), entry);
+                      cv::Point2f(src_patch.cols / 2.0f, src_patch.rows / 2.0f), entry);
     entry.copyTo(dst_patch, mHexMask);
     mHexMask.copyTo(dst_patch_gray, mHexMask);
 #ifdef DEBUG
-    std::string img_name = mImages[best_id].substr(mImages[best_id].find_last_of('/')+1);
+    std::string img_name = mImages[best_id].substr(mImages[best_id].find_last_of('/') + 1);
     cv::putText(dst_img, img_name,
                 cv::Point(src_x + dx / 3.0f, src_y + dy / 1.5f),
                 CV_FONT_HERSHEY_PLAIN, 2.0,
@@ -356,15 +357,16 @@ void HexaMosaic::ColorBalance(cv::Mat &ioSrc, const cv::Mat &inDst)
   cvtColor(dst_lab, dst_lab, CV_RGB2Lab);
   cv::Scalar dst_lab_mean = cv::mean(dst_lab, mHexMask);
 
-  cv::Mat src_lab; 
+  cv::Mat src_lab;
   cvtColor(ioSrc, src_lab, CV_RGB2Lab);
   cv::Scalar src_lab_mean = cv::mean(src_lab);
-  
+
   // Calculate deltas
   cv::Scalar deltas;
+
   for (int i = 0; i < 3; i++)
     deltas[i] = dst_lab_mean[i] - src_lab_mean[i];
-  
+
   // Translate X,Y by deltas
   cv::add(src_lab, deltas, src_lab);
 

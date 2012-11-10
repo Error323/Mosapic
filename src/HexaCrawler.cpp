@@ -6,10 +6,12 @@
 
 void HexaCrawler::Crawl(rcString inSrcDir, rcString inDstDir, cInt inTileSize)
 {
-  char c = inDstDir.at(inDstDir.size()-1);
+  char c = inDstDir.at(inDstDir.size() - 1);
   mDstDir = inDstDir;
+
   if (c != '/')
     mDstDir += "/";
+
   mTileSize = inTileSize;
   mImgCount = 0;
 
@@ -82,7 +84,7 @@ void HexaCrawler::Process(rcString inImgName)
 
   Resize(img_color);
 
-  std::string img_dst = mDstDir + inImgName.substr(inImgName.find_last_of('/')+1);
+  std::string img_dst = mDstDir + inImgName.substr(inImgName.find_last_of('/') + 1);
   cv::imwrite(img_dst, img_color);
   mImgCount++;
   std::cout << " -> " << img_dst << " [done]" << std::endl;
