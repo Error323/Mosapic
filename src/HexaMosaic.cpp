@@ -18,14 +18,14 @@
 #define COUNTER_START_VAL 10
 #define INIT_COUNTER(c) int c = COUNTER_START_VAL
 
-#define COUNT_DOWN(i, c, v)                     \
-  do {                                          \
-  if (i % (v/COUNTER_START_VAL) == 0 && c >= 0) \
-{                                               \
-  std::cout << c << " " << std::flush;          \
-  c--;                                          \
-  }                                             \
-  } while(0)                                    \
+#define COUNT_DOWN(i, c, v)                       \
+  do {                                            \
+    if (i % (v/COUNTER_START_VAL) == 0 && c >= 0) \
+    {                                             \
+      std::cout << c << " " << std::flush;        \
+      c--;                                        \
+    }                                             \
+  } while(0)                                      \
  
 HexaMosaic::HexaMosaic(
   rcString inSourceImage,
@@ -245,7 +245,8 @@ void HexaMosaic::Create()
     dst_patch = dst_img(roi);
     dst_patch_gray = dst_img_gray(roi);
     src_patch = cv::imread(mImages[best_id], (mUseGrayscale ? 0 : 1));
-    ColorBalance(src_patch, pca_input.row(mIndices[i]));
+    if (!mUseGrayscale)
+      ColorBalance(src_patch, pca_input.row(mIndices[i]));
     cv::getRectSubPix(src_patch, cv::Size(mHexWidth, mHexHeight),
                       cv::Point2f(src_patch.cols / 2.0f, src_patch.rows / 2.0f), entry);
     entry.copyTo(dst_patch, mHexMask);
