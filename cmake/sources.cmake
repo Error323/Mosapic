@@ -9,3 +9,7 @@ SET(Hexapic_SOURCE
   src/Types.hpp
   src/Debugger.hpp
 )
+
+SET(Generator_SOURCE
+  src/generator/main.cpp
+)

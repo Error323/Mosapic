@@ -7,7 +7,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 # NOTE: We need -rdynamic for backtrace() to work properly
 #-------------------------------------------------------------------------------
 SET(CMAKE_COLOR_MAKEFILE ON)
-SET(CMAKE_CXX_FLAGS "-Wall -Wextra -Werror")
+SET(CMAKE_CXX_FLAGS "-Wall -Wextra")
 SET(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -rdynamic -DDEBUG")
 SET(CMAKE_CXX_FLAGS_RELEASE "-O2")
 SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g -rdynamic -DDEBUG")
@@ -64,6 +64,15 @@ TARGET_LINK_LIBRARIES(${CMAKE_PROJECT_NAME}
 	${OpenCV_LIBS}
 )
 
+#-------------------------------------------------------------------------------
+# Define executable and link libraries
+#-------------------------------------------------------------------------------
+ADD_EXECUTABLE(generator ${Generator_SOURCE})
+
+TARGET_LINK_LIBRARIES(generator
+        ${Boost_LIBRARIES}
+        ${OpenCV_LIBS}
+)
 
 #-------------------------------------------------------------------------------
 # Status report
