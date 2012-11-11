@@ -332,6 +332,7 @@ void HexaMosaic::Create()
     << "-minradius:" << mMinRadius
     << "-db:" << database.substr(0, database.size() - 1)
     << "-grayscale:" << (mUseGrayscale ? "on" : "off")
+    << "-cbr:" << mCBRatio
     << ".jpg";
 
   cv::imwrite(s.str(), dst_img);
