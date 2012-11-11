@@ -57,6 +57,32 @@ HexaMosaic::HexaMosaic(
   mHexRadius = mHexHeight / 2.0f;
   mHexWidth  = roundf(mHexRadius * HEXAGON_WIDTH);
 
+  mSrcImg = cv::imread(mSourceImage, (mUseGrayscale ? 0 : 1));
+  ASSERT_MSG(mSrcImg.data != NULL && mSrcImg.rows > 0 && mSrcImg.cols > 0, "Invalid input imgage");
+
+  // Find mHeight such that the ratio is closest to original
+  float orig_ratio = mSrcImg.cols / float(mSrcImg.rows);
+  mDstWidth = mWidth * mHexWidth + mWidth * .25;
+  int start_height = roundf(mWidth * orig_ratio) / 2;
+  int end_height = roundf(mWidth * orig_ratio) + start_height;
+  float prev_ratio = 100.0f;
+
+  for (int height = start_height; height < end_height; height++)
+  {
+    mDstHeight = height * mHexHeight * .75 + mHexHeight * .25 + height * .25;
+    float cur_ratio = mDstWidth / float(mDstHeight);
+    if (fabs(orig_ratio-prev_ratio) < fabs(orig_ratio-cur_ratio))
+    {
+      mHeight = height - 1;
+      mDstHeight = mHeight * mHexHeight * .75 + mHexHeight * .25 + mHeight * .25;
+      break;
+    }
+    prev_ratio = cur_ratio;
+  }
+
+  std::cout << "Output dimensions WxH: " << mWidth << "x" << mHeight;
+  std::cout << " (" << mDstWidth << "x" << mDstHeight << ")" << std::endl;
+
   // Cache coordinates, so we can e.g. randomize
   for (int y = 0; y < mHeight; y++)
   {
@@ -70,7 +96,7 @@ HexaMosaic::HexaMosaic(
     }
   }
 
-  // Precache hexagon coordinates
+  // Precache hexagon mask
   mHexMask.create(mHexHeight, mHexWidth, CV_8UC1);
   mHexMask.setTo(cv::Scalar(0));
 
@@ -92,25 +118,21 @@ HexaMosaic::HexaMosaic(
 #endif // DEBUG
 }
 
+
 void HexaMosaic::Create()
 {
   // unit dimensions of hexagon facing upwards
   cFloat unit_dx = HEXAGON_WIDTH;
   cFloat unit_dy = HEXAGON_HEIGHT * (3.0f / 4.0f);
 
-  // Load source image
-  cv::Mat src_img = cv::imread(mSourceImage, (mUseGrayscale ? 0 : 1));
-  cv::Mat dst_img(mHeight * mHexHeight * .75 + mHexHeight * .25 + mHeight * .25,
-                  mWidth * mHexWidth + mWidth * .25,
-                  (mUseGrayscale ? CV_8UC1 : CV_8UC3));
-  cv::Mat dst_img_gray(mHeight * mHexHeight * .75 + mHexHeight * .25 + mHeight * .25,
-                       mWidth * mHexWidth + mWidth * .25,
-                       CV_8UC1);
+  // prepare destination image
+  cv::Mat dst_img(mDstHeight, mDstWidth, (mUseGrayscale ? CV_8UC1 : CV_8UC3));
+  cv::Mat dst_img_gray(mDstHeight, mDstWidth, CV_8UC1);
 
   // Compute pca input data from source image
   cv::Mat pca_input(mCoords.size(), mHexHeight * mHexWidth * (mUseGrayscale ? 1 : 3), CV_8UC1);
-  float dx = src_img.cols / float(mWidth);
-  float dy = src_img.rows / float(mHeight);
+  float dx = mSrcImg.cols / float(mWidth);
+  float dy = mSrcImg.rows / float(mHeight);
 
   for (int i = 0, n = mCoords.size(); i < n; i++)
   {
@@ -119,7 +141,7 @@ void HexaMosaic::Create()
     cInt src_y = roundf(y * dy);
     cInt src_x = roundf(x * dx + ((y % 2) * (dx / 2.0f)));
     cv::Rect roi(src_x, src_y, roundf(dx), roundf(dy));
-    cv::Mat data_row, patch_resized, patch = src_img(roi);
+    cv::Mat data_row, patch_resized, patch = mSrcImg(roi);
     cv::resize(patch, patch_resized, cv::Size(mHexWidth, mHexHeight));
     patch_resized.copyTo(data_row, mHexMask);
     cv::Mat pca_input_row = pca_input.row(i);
@@ -312,6 +334,7 @@ void HexaMosaic::Create()
   std::cout << "Resulting image: " << s.str() << std::endl;
 }
 
+
 void HexaMosaic::Crawl(const boost::filesystem::path &inPath)
 {
   static boost::match_results<std::string::const_iterator> what;
@@ -343,6 +366,7 @@ void HexaMosaic::Crawl(const boost::filesystem::path &inPath)
   }
 }
 
+
 void HexaMosaic::ColorBalance(cv::Mat &ioSrc, const cv::Mat &inDst)
 {
   cv::Mat dst_lab = inDst.reshape(3, mHexHeight);
@@ -366,11 +390,13 @@ void HexaMosaic::ColorBalance(cv::Mat &ioSrc, const cv::Mat &inDst)
   cvtColor(src_lab, ioSrc, CV_Lab2RGB);
 }
 
+
 void HexaMosaic::Process(rcString inImgName)
 {
   mImages.push_back(inImgName);
   mNumImages++;
 }
+
 
 bool HexaMosaic::InHexagon(cFloat inX, cFloat inY, cFloat inRadius)
 {

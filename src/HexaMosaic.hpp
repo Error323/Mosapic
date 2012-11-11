@@ -65,9 +65,12 @@ private:
   int mHexWidth;
   int mHexHeight;
   int mHexRadius;
+  int mDstWidth;
+  int mDstHeight;
 
   cv::Mat mDatabase;
   cv::Mat mHexMask;
+  cv::Mat mSrcImg;
 
   std::vector<cv::Point2i> mCoords;
   vInt mIndices;
