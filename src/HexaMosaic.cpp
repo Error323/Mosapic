@@ -34,7 +34,8 @@ HexaMosaic::HexaMosaic(
   cInt inHeight,
   cBool inGrayscale,
   cInt inDimensions,
-  cInt inMinRadius
+  cInt inMinRadius,
+  cFloat inCBRatio
 ):
   mSourceImage(inSourceImage),
   mWidth(inWidth),
@@ -42,8 +43,11 @@ HexaMosaic::HexaMosaic(
   mUseGrayscale(inGrayscale),
   mDimensions(inDimensions),
   mMinRadius(inMinRadius),
+  mCBRatio(inCBRatio),
   mNumImages(0)
 {
+  ASSERT(mCBRatio >= 0.0f && mCBRatio <= 1.0f);
+
   mDatabaseDir = inDatabase.at(inDatabase.size() - 1) == '/' ? inDatabase : inDatabase + '/';
   Crawl(mDatabaseDir);
 
@@ -381,7 +385,7 @@ void HexaMosaic::ColorBalance(cv::Mat &ioSrc, const cv::Mat &inDst)
   cv::Scalar deltas;
 
   for (int i = 0; i < 3; i++)
-    deltas[i] = dst_lab_mean[i] - src_lab_mean[i];
+    deltas[i] = mCBRatio * (dst_lab_mean[i] - src_lab_mean[i]);
 
   // Translate X,Y by deltas
   cv::add(src_lab, deltas, src_lab);

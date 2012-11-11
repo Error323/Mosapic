@@ -13,6 +13,7 @@ namespace po = boost::program_options;
 int main(int argc, char **argv)
 {
   int tile_size, dimensions, max_radius;
+  float cb_ratio;
   po::options_description generic("Generic options");
   generic.add_options()
   ("version,v", "print version string")
@@ -35,6 +36,7 @@ int main(int argc, char **argv)
   ("grayscale", "use grayscale")
   ("dimensions", po::value<int>(&dimensions)->default_value(8), "pca dimensions")
   ("min-radius", po::value<int>(&max_radius)->default_value(5), "min radius between duplicates")
+  ("cb-ratio", po::value<float>(&cb_ratio)->default_value(1.0), "color balance shift in [0, 1]")
   ;
 
   po::options_description cmdline_options;
@@ -84,7 +86,7 @@ int main(int argc, char **argv)
           return 1;
         }
 
-        HexaMosaic hm(input_image, database, width, height, vm.count("grayscale"), dimensions, max_radius);
+        HexaMosaic hm(input_image, database, width, height, vm.count("grayscale"), dimensions, max_radius, cb_ratio);
         hm.Create();
       }
       else

@@ -20,7 +20,8 @@ public:
     cInt inHeight,
     cBool inGrayscale,
     cInt inDimensions,
-    cInt inMaxRadius
+    cInt inMaxRadius,
+    cFloat inCBRatio
   );
 
   void Create();
@@ -61,12 +62,15 @@ private:
   bool mUseGrayscale;
   int mDimensions;
   int mMinRadius;
+  float mCBRatio;
   int mNumImages;
+
   int mHexWidth;
   int mHexHeight;
   int mHexRadius;
   int mDstWidth;
   int mDstHeight;
+
 
   cv::Mat mDatabase;
   cv::Mat mHexMask;
