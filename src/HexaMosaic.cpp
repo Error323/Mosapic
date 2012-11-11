@@ -143,8 +143,8 @@ void HexaMosaic::Create()
   {
     cInt x = mCoords[i].x;
     cInt y = mCoords[i].y;
-    cInt src_y = roundf(y * dy);
-    cInt src_x = roundf(x * dx + ((y % 2) * (dx / 2.0f)));
+    cInt src_y = (y * dy);
+    cInt src_x = (x * dx + ((y % 2) * (dx / 2.0f)));
     cv::Rect roi(src_x, src_y, roundf(dx), roundf(dy));
     cv::Mat data_row, patch_resized, patch = mSrcImg(roi);
     cv::resize(patch, patch_resized, cv::Size(mHexWidth, mHexHeight));
