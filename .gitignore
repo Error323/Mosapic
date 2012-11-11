@@ -1,4 +1,5 @@
 .*swp
 *.user
+CMakeLists.txt.*
 data/
 build/
