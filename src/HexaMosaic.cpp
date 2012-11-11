@@ -62,16 +62,15 @@ HexaMosaic::HexaMosaic(
   mHexWidth  = roundf(mHexRadius * HEXAGON_WIDTH);
 
   mSrcImg = cv::imread(mSourceImage, (mUseGrayscale ? 0 : 1));
-  ASSERT_MSG(mSrcImg.data != NULL && mSrcImg.rows > 0 && mSrcImg.cols > 0, "Invalid input imgage");
+  ASSERT_MSG(mSrcImg.data != NULL && mSrcImg.rows > 0 && mSrcImg.cols > 0, "Invalid input image");
 
   // Find mHeight such that the ratio is closest to original
   float orig_ratio = mSrcImg.cols / float(mSrcImg.rows);
   mDstWidth = mWidth * mHexWidth + mWidth * .25;
-  int start_height = roundf(mWidth * orig_ratio) / 2;
-  int end_height = roundf(mWidth * orig_ratio) + start_height;
   float prev_ratio = 100.0f;
 
-  for (int height = start_height; height < end_height; height++)
+  int height = 1;
+  while (true)
   {
     mDstHeight = height * mHexHeight * .75 + mHexHeight * .25 + height * .25;
     float cur_ratio = mDstWidth / float(mDstHeight);
@@ -82,10 +81,12 @@ HexaMosaic::HexaMosaic(
       break;
     }
     prev_ratio = cur_ratio;
+    height++;
   }
 
-  std::cout << "Output dimensions WxH: " << mWidth << "x" << mHeight;
-  std::cout << " (" << mDstWidth << "x" << mDstHeight << ")" << std::endl;
+  std::cout << "Output dimensions WxH: original(" << mSrcImg.cols << "x" << mSrcImg.rows
+            << ") tiles(" << mWidth << "x" << mHeight << ") final("
+            << mDstWidth << "x" << mDstHeight << ")" << std::endl;
 
   // Cache coordinates, so we can e.g. randomize
   for (int y = 0; y < mHeight; y++)
