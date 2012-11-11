@@ -267,32 +267,23 @@ void HexaMosaic::Create()
   cv::threshold(dst_img_gray, dst_binary, 0.0, 255.0, CV_THRESH_BINARY_INV);
   std::vector<cv::Mat> split;
   cv::split(dst_img, split);
-  std::vector<int> idx;
-  idx.push_back(1);
-  idx.push_back(-1);
-  idx.push_back(2);
-  idx.push_back(-2);
 
-  for (int y = dy / 2.0f; y < dst_binary.rows - dy / 2.0f; y++)
+  for (int y = 0; y < dst_binary.rows; y++)
   {
-    for (int x = dx / 2.0f; x < dst_binary.cols - dx / 2.0f; x++)
+    for (int x = 1; x < dst_binary.cols; x++)
     {
       if (dst_binary.at<Uint8>(y, x) > 0)
       {
-        for (int i = 0, n = idx.size(); i < n; i++)
+        while (x < dst_binary.cols && dst_binary.at<Uint8>(y, x) > 0)
         {
-          if (dst_binary.at<Uint8>(y, x + idx[i]) == 0)
+          split[0].at<Uint8>(y, x) = split[0].at<Uint8>(y, x - 1);
+
+          if (!mUseGrayscale)
           {
-            split[0].at<Uint8>(y, x) = split[0].at<Uint8>(y, x + idx[i]);
-
-            if (!mUseGrayscale)
-            {
-              split[1].at<Uint8>(y, x) = split[1].at<Uint8>(y, x + idx[i]);
-              split[2].at<Uint8>(y, x) = split[2].at<Uint8>(y, x + idx[i]);
-            }
-
-            break;
+            split[1].at<Uint8>(y, x) = split[1].at<Uint8>(y, x - 1);
+            split[2].at<Uint8>(y, x) = split[2].at<Uint8>(y, x - 1);
           }
+          x++;
         }
       }
     }
