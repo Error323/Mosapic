@@ -1,5 +1,7 @@
 .*swp
 *.user
+*.tiff
+*.jpg
 CMakeLists.txt.*
 data/
 build/
