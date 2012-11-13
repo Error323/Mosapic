@@ -332,7 +332,7 @@ void HexaMosaic::Create()
     << "-db:" << database.substr(0, database.size() - 1)
     << "-grayscale:" << (mUseGrayscale ? "on" : "off")
     << "-cbr:" << mCBRatio
-    << ".jpg";
+    << ".tiff";
 
   cv::imwrite(s.str(), dst_img);
   std::cout << "[done]" << std::endl;

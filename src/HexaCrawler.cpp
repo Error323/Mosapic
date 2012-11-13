@@ -84,7 +84,9 @@ void HexaCrawler::Process(rcString inImgName)
 
   Resize(img_color);
 
-  std::string img_dst = mDstDir + inImgName.substr(inImgName.find_last_of('/') + 1);
+  size_t s_pos = inImgName.find_last_of('/') + 1;
+  size_t e_pos = inImgName.find_last_of('.') - s_pos;
+  std::string img_dst = mDstDir + inImgName.substr(s_pos, e_pos) + ".tiff";
   cv::imwrite(img_dst, img_color);
   mImgCount++;
   std::cout << " -> " << img_dst << " [done]" << std::endl;
