@@ -3,7 +3,7 @@
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
 
-#include "Types.hpp"
+#include "utils/Types.hpp"
 #include "Version.hpp"
 #include "HexaCrawler.hpp"
 #include "HexaMosaic.hpp"

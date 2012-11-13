@@ -1,7 +1,7 @@
 #ifndef HEXACRAWLER_HDR
 #define HEXACRAWLER_HDR
 
-#include "Types.hpp"
+#include "utils/Types.hpp"
 #include <boost/filesystem.hpp>
 #include <boost/regex.hpp>
 #include <opencv/cv.h>

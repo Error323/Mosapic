@@ -65,16 +65,6 @@ TARGET_LINK_LIBRARIES(${CMAKE_PROJECT_NAME}
 )
 
 #-------------------------------------------------------------------------------
-# Define executable and link libraries
-#-------------------------------------------------------------------------------
-ADD_EXECUTABLE(generator ${Generator_SOURCE})
-
-TARGET_LINK_LIBRARIES(generator
-        ${Boost_LIBRARIES}
-        ${OpenCV_LIBS}
-)
-
-#-------------------------------------------------------------------------------
 # Status report
 #-------------------------------------------------------------------------------
 MESSAGE(STATUS " Compiling mode is '${CMAKE_BUILD_TYPE}'")

@@ -1,5 +1,5 @@
 #include "HexaMosaic.hpp"
-#include "Debugger.hpp"
+#include "utils/Debugger.hpp"
 
 #include <cmath>
 #include <fstream>
@@ -154,6 +154,7 @@ void HexaMosaic::Create()
     data_row.copyTo(pca_input_row);
   }
 
+  std::cout << "MATRIX: " << pca_input.cols << "x" << pca_input.rows << std::endl;
   std::cout << "Performing pca..." << std::flush;
   cv::PCA pca(pca_input, cv::Mat(), CV_PCA_DATA_AS_ROW, mDimensions);
 #ifdef DEBUG
