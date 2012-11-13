@@ -67,7 +67,7 @@ cur_job=0
 remaining=0
 for IMG in ${INPUTDIR}*
 do
-  cmd="../build/Hexapic --input-image=${IMG} --database=${DATABASE} --width=${WIDTH} --dimensions=${DIM} --min-radius=${RAD} --cb-ratio=${CBR}"
+  cmd="../build/hexapic --input-image=${IMG} --database=${DATABASE} --width=${WIDTH} --dimensions=${DIM} --min-radius=${RAD} --cb-ratio=${CBR}"
   JOBS[num_jobs]=$cmd
   num_jobs=$((num_jobs + 1))
 done
