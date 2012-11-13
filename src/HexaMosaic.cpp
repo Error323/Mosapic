@@ -84,8 +84,8 @@ HexaMosaic::HexaMosaic(
     height++;
   }
 
-  std::cout << "Output dimensions WxH: original(" << mSrcImg.cols << "x" << mSrcImg.rows
-            << ") tiles(" << mWidth << "x" << mHeight << ") final("
+  std::cout << "Original(" << mSrcImg.cols << "x" << mSrcImg.rows
+            << ") Tiles(" << mWidth << "x" << mHeight << ") Final("
             << mDstWidth << "x" << mDstHeight << ")" << std::endl;
 
   // Cache coordinates, so we can e.g. randomize
@@ -154,7 +154,6 @@ void HexaMosaic::Create()
     data_row.copyTo(pca_input_row);
   }
 
-  std::cout << "MATRIX: " << pca_input.cols << "x" << pca_input.rows << std::endl;
   std::cout << "Performing pca..." << std::flush;
   cv::PCA pca(pca_input, cv::Mat(), CV_PCA_DATA_AS_ROW, mDimensions);
 #ifdef DEBUG
@@ -170,7 +169,6 @@ void HexaMosaic::Create()
     std::string entry = "eigenvector-" + s.str() + ".jpg";
     cv::imwrite(entry, eigenvec);
   }
-
 #endif // DEBUG
   std::cout << "[done]" << std::endl;
 
