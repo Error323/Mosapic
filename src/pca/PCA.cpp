@@ -16,6 +16,10 @@ PCA::PCA(const int rows, const int cols):
   mMean.create(1, mCols, CV_32FC1);
   mMean.setTo(cv::Scalar(0.0f));
 
+  size_t bytes = mCols * mRows * mData.elemSize();
+  float mbytes = bytes / (1024.0f*1024.0f);
+  WarningLine("Data(" << mRows << ", " << mCols << ") "<< mbytes << " MBytes");
+
 #ifndef ENABLE_CUDA_DEVICE
   mUseDevice = false;
 #else
@@ -179,13 +183,14 @@ void PCA::EigenVectorsGold()
 {
   PROFILE_FUNCTION();
 
-  cv::Mat row;
+  cv::Mat eigen(mCols, mDimensions, CV_32FC1), tmp;
   for (int i = 0; i < mDimensions; i++)
   {
-    double alpha = 1.0/sqrtf((mCols-1)*mS.at<float>(i));
-    row = mEigen.row(i).t();
-    cv::gemm(mData, mE.col(i), alpha, cv::Mat(), 0.0, row, cv::GEMM_1_T);
+    double alpha = 1.0/sqrt((mCols-1)*mS.at<float>(i));
+    tmp = eigen.col(i);
+    cv::gemm(mData, mE.col(i), alpha, cv::Mat(), 0.0, tmp, cv::GEMM_1_T);
   }
+  mEigen = eigen.t();
 }
 
 void PCA::CovarianceGold(const cv::Mat &data, cv::Mat &cov)
