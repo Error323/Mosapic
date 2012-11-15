@@ -53,6 +53,8 @@ private:
   void Crawl(const boost::filesystem::path &inPath);
   void Process(rcString inImgName);
   void ColorBalance(cv::Mat &ioSrc, const cv::Mat &inDst);
+  void Im2HexRow(const cv::Mat &in, cv::Mat &out);
+  void HexRow2Im(const cv::Mat &in, cv::Mat &out);
 
   String mSourceImage;
   String mDatabaseDir;
@@ -77,6 +79,7 @@ private:
   cv::Mat mSrcImg;
 
   std::vector<cv::Point2i> mCoords;
+  std::vector<cv::Point2i> mHexCoords;
   vInt mIndices;
   vString mImages;
 };

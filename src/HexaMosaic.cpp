@@ -118,6 +118,8 @@ HexaMosaic::HexaMosaic(
         cInt x = i + (mHexRadius * HALF_HEXAGON_WIDTH);
         cInt y = j + mHexRadius;
         mHexMask.at<Uint8>(y, x) = 255;
+        cv::Point2i p(x,y);
+        mHexCoords.push_back(p);
       }
     }
   }
@@ -127,6 +129,19 @@ HexaMosaic::HexaMosaic(
 #endif // DEBUG
 }
 
+void HexaMosaic::Im2HexRow(const cv::Mat &in, cv::Mat &out)
+{
+  out.create(1, mHexCoords.size(), (mUseGrayscale ? CV_8UC1 : CV_8UC3));
+  for (int i = 0, n = mHexCoords.size(); i < n; i++)
+  {
+    cv::Point2i &p = mHexCoords[i];
+    if (mUseGrayscale)
+      out.at<unsigned char>(0, i) = in.at<unsigned char>(p.y, p.x);
+    else
+      out.at<cv::Vec3b>(0, i) = in.at<cv::Vec3b>(p.y, p.x);
+  }
+  out = out.reshape(1, 1);
+}
 
 void HexaMosaic::Create()
 {
@@ -139,8 +154,8 @@ void HexaMosaic::Create()
   cv::Mat dst_img_gray(mDstHeight, mDstWidth, CV_8UC1);
 
   // Compute pca input data from source image
-  cv::Mat pca_input(mCoords.size(), mHexHeight * mHexWidth * (mUseGrayscale ? 1 : 3), CV_8UC1);
-  PCA pca(mCoords.size(), mHexHeight * mHexWidth * (mUseGrayscale ? 1 : 3));
+  cv::Mat pca_input(mCoords.size(), mHexCoords.size() * (mUseGrayscale ? 1 : 3), CV_8UC1);
+  PCA pca(mCoords.size(), mHexCoords.size() * (mUseGrayscale ? 1 : 3));
   float dx = mSrcImg.cols / float(mWidth);
   float dy = mSrcImg.rows / float(mHeight);
 
@@ -153,29 +168,30 @@ void HexaMosaic::Create()
     cv::Rect roi(src_x, src_y, roundf(dx), roundf(dy));
     cv::Mat data_row, patch_resized, patch = mSrcImg(roi);
     cv::resize(patch, patch_resized, cv::Size(mHexWidth, mHexHeight));
-    patch_resized.copyTo(data_row, mHexMask);
+    Im2HexRow(patch_resized, data_row);
     cv::Mat pca_input_row = pca_input.row(i);
-    data_row = data_row.reshape(1, 1);
     data_row.copyTo(pca_input_row);
     pca.AddRow(data_row);
   }
 
   Notice("Performing pca...");
   pca.Solve(mDimensions);
-#ifdef DEBUG
+//#ifdef DEBUG
 
   // Construct eigenvector images for debugging
   for (int i = 0; i < mDimensions; i++)
   {
     cv::Mat eigenvec;
+    cv::Mat correct;
     cv::normalize(pca.GetEigenVector(i), eigenvec, 255, 0, cv::NORM_MINMAX);
-    eigenvec = eigenvec.reshape((mUseGrayscale ? 1 : 3), mHexHeight);
+    eigenvec.convertTo(correct, CV_8UC3);
+    HexRow2Im(correct, eigenvec);
     std::stringstream s;
     s << i;
     std::string entry = "eigenvector-" + s.str() + ".jpg";
     cv::imwrite(entry, eigenvec);
   }
-#endif // DEBUG
+//#endif // DEBUG
   NoticeLine("[done]");
 
   // Compress original image data
@@ -196,9 +212,10 @@ void HexaMosaic::Create()
 
     cv::getRectSubPix(img, cv::Size(mHexWidth, mHexHeight),
                       cv::Point2f(img.cols / 2.0f, img.rows / 2.0f), entry);
-    entry = entry.reshape(1, 1);
+    cv::Mat data_row;
+    Im2HexRow(entry, data_row);
     compressed_entry = compressed_database.row(i);
-    pca.Project(entry, compressed_entry);
+    pca.Project(data_row, compressed_entry);
     COUNT_DOWN(i, compress, mNumImages);
   }
   NoticeLine("[done]");
@@ -368,10 +385,21 @@ void HexaMosaic::Crawl(const boost::filesystem::path &inPath)
   }
 }
 
+void HexaMosaic::HexRow2Im(const cv::Mat &in, cv::Mat &out)
+{
+  out.create(mHexHeight, mHexWidth, CV_8UC3);
+  out.setTo(cv::Scalar(0));
+  for (int i = 0, n = mHexCoords.size(); i < n; i++)
+  {
+    cv::Point2i &p = mHexCoords[i];
+    out.at<cv::Vec3b>(p.y, p.x) = in.at<cv::Vec3b>(0, i);
+  }
+}
 
 void HexaMosaic::ColorBalance(cv::Mat &ioSrc, const cv::Mat &inDst)
 {
-  cv::Mat dst_lab = inDst.reshape(3, mHexHeight);
+  cv::Mat dst_lab;
+  HexRow2Im(inDst, dst_lab);
   cvtColor(dst_lab, dst_lab, CV_RGB2Lab);
   cv::Scalar dst_lab_mean = cv::mean(dst_lab, mHexMask);
 

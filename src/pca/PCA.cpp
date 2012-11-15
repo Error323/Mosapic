@@ -23,7 +23,7 @@ PCA::PCA(const int rows, const int cols):
 #ifndef ENABLE_CUDA_DEVICE
   mUseDevice = false;
 #else
-  mUseDevice = true;
+  mUseDevice = false;
 #endif
 
   InitDevice();
@@ -31,6 +31,7 @@ PCA::PCA(const int rows, const int cols):
 
 void PCA::AddRow(const cv::Mat &row)
 {
+  PROFILE_FUNCTION();
   ASSERT(row.cols == mCols);
   ASSERT(row.rows == 1);
 
