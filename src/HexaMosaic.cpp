@@ -26,7 +26,7 @@
   do {                                            \
     if (i % (v/COUNTER_START_VAL) == 0 && c >= 0) \
     {                                             \
-      std::cout << c << " " << std::flush;        \
+      Notice(c << " ");                           \
       c--;                                        \
     }                                             \
   } while(0)                                      \
@@ -88,9 +88,9 @@ HexaMosaic::HexaMosaic(
     height++;
   }
 
-  std::cout << "Original(" << mSrcImg.cols << "x" << mSrcImg.rows
+  DebugLine("Original(" << mSrcImg.cols << "x" << mSrcImg.rows
             << ") Tiles(" << mWidth << "x" << mHeight << ") Final("
-            << mDstWidth << "x" << mDstHeight << ")" << std::endl;
+            << mDstWidth << "x" << mDstHeight << ")");
 
   // Cache coordinates, so we can e.g. randomize
   for (int y = 0; y < mHeight; y++)
@@ -160,7 +160,7 @@ void HexaMosaic::Create()
     pca.AddRow(data_row);
   }
 
-  std::cout << "Performing pca..." << std::flush;
+  Notice("Performing pca...");
   pca.Solve(mDimensions);
 #ifdef DEBUG
 
@@ -176,16 +176,16 @@ void HexaMosaic::Create()
     cv::imwrite(entry, eigenvec);
   }
 #endif // DEBUG
-  std::cout << "[done]" << std::endl;
+  NoticeLine("[done]");
 
   // Compress original image data
-  std::cout << "Compress source image..." << std::flush;
+  Notice("Compress source image...");
   cv::Mat compressed_src_img(pca_input.rows, mDimensions, CV_32FC1);
   pca.Project(pca_input, compressed_src_img);
-  std::cout << "[done]" << std::endl;
+  NoticeLine("[done]");
 
   // Compress database image data
-  std::cout << "Compress database..." << std::flush;
+  Notice("Compress database...");
   INIT_COUNTER(compress);
   cv::Mat compressed_database(mNumImages, mDimensions, CV_32FC1);
   cv::Mat img, entry, compressed_entry;
@@ -201,12 +201,11 @@ void HexaMosaic::Create()
     pca.Project(entry, compressed_entry);
     COUNT_DOWN(i, compress, mNumImages);
   }
-
-  std::cout << "[done]" << std::endl;
+  NoticeLine("[done]");
 
   // Construct mosaic
   INIT_COUNTER(mosaic);
-  std::cout << "Construct mosaic..." << std::flush;
+  Notice("Construct mosaic...");
   dx = mHexRadius * unit_dx;
   dy = mHexRadius * unit_dy;
   random_shuffle(mIndices.begin(), mIndices.end());
@@ -333,8 +332,8 @@ void HexaMosaic::Create()
     << ".tiff";
 
   cv::imwrite(s.str(), dst_img);
-  std::cout << "[done]" << std::endl;
-  std::cout << "Resulting image: " << s.str() << std::endl;
+  NoticeLine("[done]");
+  NoticeLine("Resulting image: " << s.str());
 }
 
 
@@ -364,7 +363,7 @@ void HexaMosaic::Crawl(const boost::filesystem::path &inPath)
     }
     catch (const std::exception &ex)
     {
-      std::cerr << i->path() << " " << ex.what() << std::endl;
+      ErrorLine(i->path() << " " << ex.what());
     }
   }
 }
