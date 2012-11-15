@@ -2,6 +2,7 @@
 #define VERBOSE_HDR
 
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include <sstream>
 #include <map>

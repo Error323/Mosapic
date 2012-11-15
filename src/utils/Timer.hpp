@@ -9,7 +9,7 @@
 #define PROFILE_FUNCTION() PROFILE(__PRETTY_FUNCTION__)
 
 #ifdef ENABLE_PROFILING
-#define PROFILE(name) Timer t(name)
+#define PROFILE(name) Timer ___t(name)
 #else
 #define PROFILE(name)
 #endif
