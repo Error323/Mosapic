@@ -1,5 +1,9 @@
 #include "HexaMosaic.hpp"
+
+#include "pca/PCA.hpp"
 #include "utils/Debugger.hpp"
+#include "utils/Timer.hpp"
+#include "utils/Verbose.hpp"
 
 #include <cmath>
 #include <fstream>
@@ -136,6 +140,7 @@ void HexaMosaic::Create()
 
   // Compute pca input data from source image
   cv::Mat pca_input(mCoords.size(), mHexHeight * mHexWidth * (mUseGrayscale ? 1 : 3), CV_8UC1);
+  PCA pca(mCoords.size(), mHexHeight * mHexWidth * (mUseGrayscale ? 1 : 3));
   float dx = mSrcImg.cols / float(mWidth);
   float dy = mSrcImg.rows / float(mHeight);
 
@@ -152,17 +157,18 @@ void HexaMosaic::Create()
     cv::Mat pca_input_row = pca_input.row(i);
     data_row = data_row.reshape(1, 1);
     data_row.copyTo(pca_input_row);
+    pca.AddRow(data_row);
   }
 
   std::cout << "Performing pca..." << std::flush;
-  cv::PCA pca(pca_input, cv::Mat(), CV_PCA_DATA_AS_ROW, mDimensions);
+  pca.Solve(mDimensions);
 #ifdef DEBUG
 
   // Construct eigenvector images for debugging
   for (int i = 0; i < mDimensions; i++)
   {
     cv::Mat eigenvec;
-    cv::normalize(pca.eigenvectors.row(i), eigenvec, 255, 0, cv::NORM_MINMAX);
+    cv::normalize(pca.mEigen.row(i), eigenvec, 255, 0, cv::NORM_MINMAX);
     eigenvec = eigenvec.reshape((mUseGrayscale ? 1 : 3), mHexHeight);
     std::stringstream s;
     s << i;
@@ -175,22 +181,14 @@ void HexaMosaic::Create()
   // Compress original image data
   std::cout << "Compress source image..." << std::flush;
   cv::Mat compressed_src_img(pca_input.rows, mDimensions, CV_32FC1);
-  cv::Mat entry, compressed_entry;
-
-  for (int i = 0; i < pca_input.rows; i++)
-  {
-    entry = pca_input.row(i);
-    compressed_entry = compressed_src_img.row(i);
-    pca.project(entry, compressed_entry);
-  }
-
+  pca.Project(pca_input, compressed_src_img);
   std::cout << "[done]" << std::endl;
 
   // Compress database image data
   std::cout << "Compress database..." << std::flush;
   INIT_COUNTER(compress);
   cv::Mat compressed_database(mNumImages, mDimensions, CV_32FC1);
-  cv::Mat img;
+  cv::Mat img, entry, compressed_entry;
 
   for (int i = 0; i < mNumImages; i++)
   {
@@ -200,7 +198,7 @@ void HexaMosaic::Create()
                       cv::Point2f(img.cols / 2.0f, img.rows / 2.0f), entry);
     entry = entry.reshape(1, 1);
     compressed_entry = compressed_database.row(i);
-    pca.project(entry, compressed_entry);
+    pca.Project(entry, compressed_entry);
     COUNT_DOWN(i, compress, mNumImages);
   }
 
