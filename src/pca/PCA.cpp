@@ -23,7 +23,7 @@ PCA::PCA(const int rows, const int cols):
 #ifndef ENABLE_CUDA_DEVICE
   mUseDevice = false;
 #else
-  mUseDevice = false;
+  mUseDevice = true;
 #endif
 
   InitDevice();
