@@ -4,13 +4,12 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 
 #-------------------------------------------------------------------------------
 # General Settings
-# NOTE: We need -rdynamic for backtrace() to work properly
 #-------------------------------------------------------------------------------
 SET(CMAKE_COLOR_MAKEFILE ON)
 SET(CMAKE_CXX_FLAGS "-Wall -Wextra")
-SET(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -rdynamic -DDEBUG")
+SET(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -DDEBUG")
 SET(CMAKE_CXX_FLAGS_RELEASE "-O2 -march=core2")
-SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g -rdynamic -DDEBUG")
+SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g -DDEBUG")
 
 SET(ENABLE_PROFILING FALSE CACHE BOOL "Enable/Disable profiling")
 IF (ENABLE_PROFILING)
@@ -35,8 +34,8 @@ ELSE(NOT GIT_VERSION)
 ENDIF(GIT_VERSION)
 
 CONFIGURE_FILE(
-	"${Hexapic_SOURCE_DIR}/cmake/Version.hpp.in"
-	"${Hexapic_BINARY_DIR}/Version.hpp"
+	"${hexapic_SOURCE_DIR}/cmake/Version.hpp.in"
+	"${hexapic_BINARY_DIR}/Version.hpp"
 )
 
 
@@ -44,7 +43,7 @@ CONFIGURE_FILE(
 # Include sources
 #-------------------------------------------------------------------------------
 INCLUDE(cmake/sources.cmake)
-INCLUDE_DIRECTORIES(${Hexapic_BINARY_DIR})
+INCLUDE_DIRECTORIES(${hexapic_BINARY_DIR})
 
 
 #-------------------------------------------------------------------------------
@@ -67,7 +66,7 @@ INCLUDE_DIRECTORIES(
 #-------------------------------------------------------------------------------
 # Define executable and link libraries
 #-------------------------------------------------------------------------------
-ADD_EXECUTABLE(${CMAKE_PROJECT_NAME} ${Hexapic_SOURCE})
+ADD_EXECUTABLE(${CMAKE_PROJECT_NAME} ${hexapic_SOURCE})
 
 TARGET_LINK_LIBRARIES(${CMAKE_PROJECT_NAME}
 	${Boost_LIBRARIES}
