@@ -60,7 +60,7 @@ void PCA::Solve(const int dimensions)
   if (!mUseDevice || !CovarianceDevice(mData, cov))
     CovarianceGold(mData, cov);
 
-  // Compute svd
+  // Compute eigenvectors and eigenvalues of the covariance matrix
   cv::eigen(cov, mS, mE);
   mE = mE.t();
 
@@ -179,19 +179,18 @@ void PCA::EigenVectorsGold()
 {
   PROFILE_FUNCTION();
 
+  cv::Mat row;
   for (int i = 0; i < mDimensions; i++)
   {
-    float alpha = 1.0f/sqrtf((mCols-1)*mS.at<float>(i));
-    cv::Mat x = mData.t() * mE.col(i);
-    x *= alpha;
-    mEigen.row(i) = x.t();
+    double alpha = 1.0/sqrtf((mCols-1)*mS.at<float>(i));
+    row = mEigen.row(i).t();
+    cv::gemm(mData, mE.col(i), alpha, cv::Mat(), 0.0, row, cv::GEMM_1_T);
   }
 }
 
 void PCA::CovarianceGold(const cv::Mat &data, cv::Mat &cov)
 {
   PROFILE_FUNCTION();
-
-  cov = data * data.t();
-  cov *= 1.0f/(mCols-1);
+  double alpha = 1.0/(mCols-1);
+  cv::gemm(data, data, alpha, cv::Mat(), 0.0, cov, cv::GEMM_2_T);
 }
