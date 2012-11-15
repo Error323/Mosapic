@@ -176,7 +176,7 @@ void HexaMosaic::Create()
 
   Notice("Performing pca...");
   pca.Solve(mDimensions);
-//#ifdef DEBUG
+#ifdef DEBUG
 
   // Construct eigenvector images for debugging
   for (int i = 0; i < mDimensions; i++)
@@ -191,7 +191,7 @@ void HexaMosaic::Create()
     std::string entry = "eigenvector-" + s.str() + ".jpg";
     cv::imwrite(entry, eigenvec);
   }
-//#endif // DEBUG
+#endif // DEBUG
   NoticeLine("[done]");
 
   // Compress original image data
