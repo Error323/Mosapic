@@ -168,7 +168,7 @@ void HexaMosaic::Create()
   for (int i = 0; i < mDimensions; i++)
   {
     cv::Mat eigenvec;
-    cv::normalize(pca.mEigen.row(i), eigenvec, 255, 0, cv::NORM_MINMAX);
+    cv::normalize(pca.GetEigenVector(i), eigenvec, 255, 0, cv::NORM_MINMAX);
     eigenvec = eigenvec.reshape((mUseGrayscale ? 1 : 3), mHexHeight);
     std::stringstream s;
     s << i;

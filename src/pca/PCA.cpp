@@ -81,7 +81,10 @@ void PCA::Project(const cv::Mat &data, cv::Mat &projected)
 
   // Convert data to floats
   cv::Mat data_converted;
-  data.convertTo(data_converted, CV_32FC1);
+  if (data.type() != CV_32FC1)
+    data.convertTo(data_converted, CV_32FC1);
+  else
+    data_converted = data;
 
   // Subtract mean
   for (int i = 0; i < data.rows; i++)
@@ -102,6 +105,12 @@ void PCA::BackProject(const cv::Mat &projected, cv::Mat &reduced)
 
   // Reduced = Proj * Eigen + Mean
   cv::gemm(projected, mEigen, 1.0, mean, 1.0, reduced, 0);
+}
+
+cv::Mat PCA::GetEigenVector(const int i)
+{
+  ASSERT(i >= 0 && i < mDimensions);
+  return mEigen.row(i);
 }
 
 void PCA::InitDevice()

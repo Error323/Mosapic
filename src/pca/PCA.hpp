@@ -23,7 +23,7 @@ public:
   void BackProject(const cv::Mat &projected, cv::Mat &reduced);
 
   /// @brief Return eigenvector i
-  cv::Mat& GetEigenVector(const int i);
+  cv::Mat GetEigenVector(const int i);
 
 private:
   /// @brief Compute the covariance matrix on the cpu C = (D-1)^-1 * X*X^T
