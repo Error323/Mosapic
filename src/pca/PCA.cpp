@@ -75,11 +75,16 @@ void PCA::Project(const cv::Mat &data, cv::Mat &projected)
   ASSERT(mDimensions > 0 && mDimensions < mRows);
   ASSERT(data.cols == mCols);
 
-  cv::Mat d, mean;
-  data.convertTo(d, CV_32FC1);
-  cv::repeat(mMean, data.rows, 1, mean);
-  d -= mean;
-  projected = d * mEigen.t();
+  // Convert data to floats
+  cv::Mat data_converted;
+  data.convertTo(data_converted, CV_32FC1);
+
+  // Subtract mean
+  for (int i = 0; i < data.rows; i++)
+    data_converted.row(i) -= mMean;
+
+  // Project against eigenvectors
+  cv::gemm(data_converted, mEigen, 1.0, cv::Mat(), 0.0, projected, cv::GEMM_2_T);
 }
 
 void PCA::BackProject(const cv::Mat &projected, cv::Mat &reduced)
@@ -87,11 +92,12 @@ void PCA::BackProject(const cv::Mat &projected, cv::Mat &reduced)
   PROFILE_FUNCTION();
   ASSERT(mDimensions > 0 && mDimensions < mRows);
   ASSERT(projected.cols == mDimensions);
+
   cv::Mat mean;
   cv::repeat(mMean, projected.rows, 1, mean);
 
-  reduced = projected * mEigen;
-  reduced += mean;
+  // Reduced = Proj * Eigen + Mean
+  cv::gemm(projected, mEigen, 1.0, mean, 1.0, reduced, 0);
 }
 
 void PCA::InitDevice()
