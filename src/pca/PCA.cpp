@@ -72,6 +72,13 @@ void PCA::Solve(const int dimensions)
   // Compute eigenvectors
   if (!mUseDevice || !EigenVectorsDevice())
     EigenVectorsGold();
+
+  // Destroy data
+  mData.release();
+  mS.release();
+  mE.release();
+
+  ASSERT(mData.data == NULL);
 }
 
 void PCA::Project(const cv::Mat &data, cv::Mat &projected)
