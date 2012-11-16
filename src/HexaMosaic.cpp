@@ -226,7 +226,7 @@ void HexaMosaic::Create()
 
   // prepare destination image
   cv::Mat dst_img(mDstHeight, mDstWidth, CV_8UC3);
-  cv::Mat dst_img_gray(mDstHeight, mDstWidth, CV_8UC1);
+  cv::Mat dst_img_gray(mDstHeight, mDstWidth, CV_8UC1, cv::Scalar(0));
 
   dx = mHexRadius * unit_dx;
   dy = mHexRadius * unit_dy;
@@ -306,16 +306,19 @@ void HexaMosaic::Create()
   }
 
   // Stich edges with neighbouring pixel on x-axis
-  cv::Mat dst_binary;
-  cv::threshold(dst_img_gray, dst_binary, 0.0, 255.0, CV_THRESH_BINARY_INV);
+  cv::threshold(dst_img_gray, dst_img_gray, 0.0, 255.0, CV_THRESH_BINARY_INV);
 
-  for (int y = 0; y < dst_binary.rows; y++)
+#ifdef DEBUG
+  cv::imwrite("binary.png", dst_img_gray);
+#endif // DEBUG
+
+  for (int y = 0; y < dst_img_gray.rows; y++)
   {
-    for (int x = 1; x < dst_binary.cols; x++)
+    for (int x = 1; x < dst_img_gray.cols; x++)
     {
-      if (dst_binary.at<Uint8>(y, x) > 0)
+      if (dst_img_gray.at<Uint8>(y, x) > 0)
       {
-        while (x < dst_binary.cols && dst_binary.at<Uint8>(y, x) > 0)
+        while (x < dst_img_gray.cols && dst_img_gray.at<Uint8>(y, x) > 0)
         {
           dst_img.at<cv::Vec3b>(y, x) = dst_img.at<cv::Vec3b>(y, x - 1);
           x++;
