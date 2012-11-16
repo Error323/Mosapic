@@ -134,9 +134,12 @@ void PCA::InitDevice()
 
   try
   {
+    size_t free_mem, total_mem;
+    float mb = 1024.0f*1024.0f;
     Notice("Initializing " << cv::gpu::DeviceInfo().name() << "...");
-    cv::gpu::DeviceInfo().freeMemory();
-    NoticeLine("[done]");
+    total_mem = cv::gpu::DeviceInfo().totalMemory();
+    free_mem = cv::gpu::DeviceInfo().freeMemory();
+    NoticeLine("[done] ("<<free_mem/mb<<"/"<<total_mem/mb<<")");
   }
   catch (const cv::Exception &ex)
   {
