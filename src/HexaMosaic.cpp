@@ -34,13 +34,12 @@ extern bool ReadMat( const std::string &filename, cv::Mat &M);
       c--;                                        \
     }                                             \
   } while(0)                                      \
- 
+
 HexaMosaic::HexaMosaic(
   rcString inSourceImage,
   rcString inDatabase,
   cInt inWidth,
   cInt inHeight,
-  cBool inGrayscale,
   cInt inDimensions,
   cInt inMinRadius,
   cFloat inCBRatio
@@ -48,7 +47,6 @@ HexaMosaic::HexaMosaic(
   mSourceImage(inSourceImage),
   mWidth(inWidth),
   mHeight(inHeight),
-  mUseGrayscale(inGrayscale),
   mDimensions(inDimensions),
   mMinRadius(inMinRadius),
   mCBRatio(inCBRatio),
@@ -61,7 +59,7 @@ HexaMosaic::HexaMosaic(
 
   ASSERT_MSG(!mImages.empty(), "Database `%s' doesn't contain images",
              mDatabaseDir.c_str());
-  cv::Mat first = cv::imread(mImages.front(), (mUseGrayscale ? 0 : 1));
+  cv::Mat first = cv::imread(mImages.front(), 1);
   ASSERT_MSG(first.data != NULL && first.rows == first.cols && first.rows > 0,
              "First image `%s' is not valid", mImages.front().c_str());
 
@@ -69,7 +67,7 @@ HexaMosaic::HexaMosaic(
   mHexRadius = mHexHeight / 2.0f;
   mHexWidth  = roundf(mHexRadius * HEXAGON_WIDTH);
 
-  mSrcImg = cv::imread(mSourceImage, (mUseGrayscale ? 0 : 1));
+  mSrcImg = cv::imread(mSourceImage, 1);
   ASSERT_MSG(mSrcImg.data != NULL && mSrcImg.rows > 0 && mSrcImg.cols > 0, "Invalid input image");
 
   // Find mHeight such that the ratio is closest to original
@@ -138,16 +136,12 @@ HexaMosaic::HexaMosaic(
 
 void HexaMosaic::Im2HexRow(const cv::Mat &in, cv::Mat &out)
 {
-  out.create(1, mHexCoords.size(), (mUseGrayscale ? CV_8UC1 : CV_8UC3));
+  out.create(1, mHexCoords.size(), CV_8UC3);
 
   for (int i = 0, n = mHexCoords.size(); i < n; i++)
   {
     cv::Point2i &p = mHexCoords[i];
-
-    if (mUseGrayscale)
-      out.at<unsigned char>(0, i) = in.at<unsigned char>(p.y, p.x);
-    else
-      out.at<cv::Vec3b>(0, i) = in.at<cv::Vec3b>(p.y, p.x);
+    out.at<cv::Vec3b>(0, i) = in.at<cv::Vec3b>(p.y, p.x);
   }
 
   out = out.reshape(1, 1);
@@ -160,8 +154,8 @@ void HexaMosaic::Create()
   cFloat unit_dy = HEXAGON_HEIGHT * (3.0f / 4.0f);
 
   // Compute pca input data from source image
-  cv::Mat pca_input(mCoords.size(), mHexCoords.size() * (mUseGrayscale ? 1 : 3), CV_8UC1);
-  PCA pca(mCoords.size(), mHexCoords.size() * (mUseGrayscale ? 1 : 3));
+  cv::Mat pca_input(mCoords.size(), mHexCoords.size() * 3, CV_8UC1);
+  PCA pca(mCoords.size(), mHexCoords.size() * 3);
   float dx = mSrcImg.cols / float(mWidth);
   float dy = mSrcImg.rows / float(mHeight);
 
@@ -231,7 +225,7 @@ void HexaMosaic::Create()
   Notice("Construct mosaic...");
 
   // prepare destination image
-  cv::Mat dst_img(mDstHeight, mDstWidth, (mUseGrayscale ? CV_8UC1 : CV_8UC3));
+  cv::Mat dst_img(mDstHeight, mDstWidth, CV_8UC3);
   cv::Mat dst_img_gray(mDstHeight, mDstWidth, CV_8UC1);
 
   dx = mHexRadius * unit_dx;
@@ -295,13 +289,10 @@ void HexaMosaic::Create()
     cv::Rect roi(src_x, src_y, mHexWidth, mHexHeight);
     dst_patch = dst_img(roi);
     dst_patch_gray = dst_img_gray(roi);
-    src_patch = cv::imread(mImages[best_id], (mUseGrayscale ? 0 : 1));
+    src_patch = cv::imread(mImages[best_id], 1);
     cv::getRectSubPix(src_patch, cv::Size(mHexWidth, mHexHeight),
                       cv::Point2f(src_patch.cols / 2.0f, src_patch.rows / 2.0f), entry);
-
-    if (!mUseGrayscale)
-      ColorBalance(entry, pca_input.row(mIndices[i]));
-
+    ColorBalance(entry, pca_input.row(mIndices[i]));
     entry.copyTo(dst_patch, mHexMask);
     mHexMask.copyTo(dst_patch_gray, mHexMask);
 #ifdef DEBUG
@@ -330,13 +321,8 @@ void HexaMosaic::Create()
         while (x < dst_binary.cols && dst_binary.at<Uint8>(y, x) > 0)
         {
           split[0].at<Uint8>(y, x) = split[0].at<Uint8>(y, x - 1);
-
-          if (!mUseGrayscale)
-          {
-            split[1].at<Uint8>(y, x) = split[1].at<Uint8>(y, x - 1);
-            split[2].at<Uint8>(y, x) = split[2].at<Uint8>(y, x - 1);
-          }
-
+          split[1].at<Uint8>(y, x) = split[1].at<Uint8>(y, x - 1);
+          split[2].at<Uint8>(y, x) = split[2].at<Uint8>(y, x - 1);
           x++;
         }
       }
@@ -358,7 +344,6 @@ void HexaMosaic::Create()
     << "-hexdims:"  << mHexWidth << "x" << mHexHeight
     << "-minradius:" << mMinRadius
     << "-db:" << database.substr(0, database.size() - 1)
-    << "-grayscale:" << (mUseGrayscale ? "on" : "off")
     << "-cbr:" << mCBRatio
     << ".tiff";
 
@@ -375,7 +360,7 @@ void HexaMosaic::LoadImage(rcString inImageName, cv::Mat &out)
     return;
 
   cv::Mat entry, img;
-  img = cv::imread(inImageName, (mUseGrayscale ? 0 : 1));
+  img = cv::imread(inImageName, 1);
   cv::getRectSubPix(img, cv::Size(mHexWidth, mHexHeight),
                     cv::Point2f(img.cols / 2.0f, img.rows / 2.0f), entry);
   Im2HexRow(entry, out);

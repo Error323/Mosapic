@@ -34,7 +34,6 @@ int main(int argc, char **argv)
   ("input-image", po::value<String>(), "source image")
   ("database", po::value<String>(), "database directory")
   ("width", po::value<int>(), "width in tile size")
-  ("grayscale", "use grayscale")
   ("dimensions", po::value<int>(&dimensions)->default_value(8), "pca dimensions")
   ("min-radius", po::value<int>(&max_radius)->default_value(5), "min radius between duplicates")
   ("cb-ratio", po::value<float>(&cb_ratio)->default_value(1.0), "color balance shift in [0, 1]")
@@ -86,7 +85,7 @@ int main(int argc, char **argv)
       return 1;
     }
 
-    HexaMosaic hm(input_image, database, width, height, vm.count("grayscale"), dimensions, max_radius, cb_ratio);
+    HexaMosaic hm(input_image, database, width, height, dimensions, max_radius, cb_ratio);
     hm.Create();
   }
   else

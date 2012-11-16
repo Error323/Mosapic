@@ -18,9 +18,8 @@ public:
     rcString inDatabase,
     cInt inWidth,
     cInt inHeight,
-    cBool inGrayscale,
     cInt inDimensions,
-    cInt inMaxRadius,
+    cInt inMinRadius,
     cFloat inCBRatio
   );
 
