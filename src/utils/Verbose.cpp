@@ -38,6 +38,7 @@ Verbose *Verbose::Instance()
   {
     if (sOutput & LOG)
       sStream.open("log.txt", std::ios::out);
+
     sLevels[DBG] = "DEBUG";
     sLevels[NTC] = "NOTICE";
     sLevels[WRN] = "WARNING";
@@ -45,6 +46,7 @@ Verbose *Verbose::Instance()
     sLevels[FTL] = "FATAL";
     sInstance = new Verbose();
   }
+
   return sInstance;
 }
 
@@ -52,43 +54,50 @@ Verbose &Verbose::Print(rcString inMsg, Level inLevel)
 {
   if (inLevel < sMinLevel)
     return *this;
+
   if (sOutput & LOG && sStream.is_open() && sStream.good())
   {
     if (mIsStartOfLine)
       sStream << Prefix(inLevel) << inMsg;
     else
       sStream << inMsg;
+
     sStream.flush();
   }
+
   if (sOutput & SCREEN)
   {
     std::string output;
+
     if (sShouldUseColor)
       output = ColorizeLevel(inMsg, inLevel);
-    else if (mIsStartOfLine)
-      output = Prefix(inLevel) + inMsg;
     else
-      output = inMsg;
+      if (mIsStartOfLine)
+        output = Prefix(inLevel) + inMsg;
+      else
+        output = inMsg;
+
     switch (inLevel)
     {
     case ERR:
-    {
-      std::cerr << output << std::flush;
-      break;
-    }
+      {
+        std::cerr << output << std::flush;
+        break;
+      }
     case FTL:
-    {
-      std::cerr << output << std::flush;
-      exit(EXIT_FAILURE);
-      break;
-    }
+      {
+        std::cerr << output << std::flush;
+        exit(EXIT_FAILURE);
+        break;
+      }
     default:
-    {
-      std::cout << output << std::flush;
-      break;
-    }
+      {
+        std::cout << output << std::flush;
+        break;
+      }
     }
   }
+
   mIsStartOfLine = (inMsg.find('\n') != std::string::npos);
   return *this;
 }
@@ -102,6 +111,7 @@ String Verbose::ColorizeLevel(rcString inMsg, Verbose::Level inLevel)
 {
   std::stringstream s;
   s << "\033[";
+
   switch (inLevel)
   {
   case DBG:
@@ -123,6 +133,7 @@ String Verbose::ColorizeLevel(rcString inMsg, Verbose::Level inLevel)
     s << REGULAR << ";" << CYAN;
     break;
   }
+
   s << "m" << inMsg << "\033[0m";
   return s.str();
 }
@@ -131,6 +142,7 @@ String Verbose::Colorize(rcString inMsg, Color inColor, Style inStyle)
 {
   if (!ShouldUseColor())
     return inMsg;
+
   std::stringstream s;
   s << "\033["
     << inStyle
@@ -151,8 +163,10 @@ bool Verbose::ShouldUseColor()
 #else
   // On non-Windows platforms, we rely on the TERM variable.
   const char *term = getenv("TERM");
+
   if (term == NULL)
     return false;
+
   const bool term_supports_color =
     strcmp(term, "xterm") >= 0 ||
     strcmp(term, "xterm-color") >= 0 ||

@@ -7,6 +7,7 @@ SET(hexapic_SOURCE
 	src/HexaMosaic.cpp
 	src/HexaCrawler.cpp
   src/pca/PCA.cpp
+  src/utils/MatIO.cpp
   src/utils/Verbose.cpp
   src/utils/Timer.cpp
   src/utils/Types.hpp

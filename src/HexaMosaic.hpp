@@ -55,6 +55,7 @@ private:
   void ColorBalance(cv::Mat &ioSrc, const cv::Mat &inDst);
   void Im2HexRow(const cv::Mat &in, cv::Mat &out);
   void HexRow2Im(const cv::Mat &in, cv::Mat &out);
+  void LoadImage(rcString inImageName, cv::Mat &out);
 
   String mSourceImage;
   String mDatabaseDir;

@@ -17,8 +17,8 @@ PCA::PCA(const int rows, const int cols):
   mMean.setTo(cv::Scalar(0.0f));
 
   size_t bytes = mCols * mRows * mData.elemSize();
-  float mbytes = bytes / (1024.0f*1024.0f);
-  WarningLine("Data(" << mRows << ", " << mCols << ") "<< mbytes << " MBytes");
+  float mbytes = bytes / (1024.0f * 1024.0f);
+  WarningLine("Data(" << mRows << ", " << mCols << ") " << mbytes << " MBytes");
 
 #ifndef ENABLE_CUDA_DEVICE
   mUseDevice = false;
@@ -36,12 +36,14 @@ void PCA::AddRow(const cv::Mat &row)
   ASSERT(row.rows == 1);
 
   float f;
+
   for (int j = 0; j < mCols; j++)
   {
     f = static_cast<float>(row.at<unsigned char>(0, j));
-    mData.at<float>(mCurRow,j) = f;
-    mMean.at<float>(0,j) += f/mRows;
+    mData.at<float>(mCurRow, j) = f;
+    mMean.at<float>(0, j) += f / mRows;
   }
+
   mCurRow++;
 }
 
@@ -62,6 +64,7 @@ void PCA::Solve(const int dimensions)
 
   // Compute covariance matrix
   cv::Mat cov(mRows, mRows, CV_32FC1);
+
   if (!mUseDevice || !CovarianceDevice(mData, cov))
     CovarianceGold(mData, cov);
 
@@ -89,6 +92,7 @@ void PCA::Project(const cv::Mat &data, cv::Mat &projected)
 
   // Convert data to floats
   cv::Mat data_converted;
+
   if (data.type() != CV_32FC1)
     data.convertTo(data_converted, CV_32FC1);
   else
@@ -134,7 +138,7 @@ void PCA::InitDevice()
     cv::gpu::DeviceInfo().freeMemory();
     NoticeLine("[done]");
   }
-  catch(const cv::Exception& ex)
+  catch (const cv::Exception &ex)
   {
     ErrorLine("Error: " << ex.what());
     WarningLine("Falling back to cpu");
@@ -151,10 +155,10 @@ bool PCA::CovarianceDevice(const cv::Mat &data, cv::Mat &cov)
     cv::gpu::GpuMat a, c;
     a.upload(data);
     c.create(mRows, mRows, CV_32FC1);
-    cv::gpu::gemm(a, a, 1.0f/(mCols-1), cv::gpu::GpuMat(), 0.0f, c, cv::GEMM_2_T);
+    cv::gpu::gemm(a, a, 1.0f / (mCols - 1), cv::gpu::GpuMat(), 0.0f, c, cv::GEMM_2_T);
     c.download(cov);
   }
-  catch(const cv::Exception& ex)
+  catch (const cv::Exception &ex)
   {
     ErrorLine("Error: " << ex.what());
     WarningLine("Falling back to cpu");
@@ -169,6 +173,7 @@ bool PCA::EigenVectorsDevice()
   PROFILE_FUNCTION();
 
   cv::Mat host_e;
+
   try
   {
     cv::gpu::GpuMat a, u, e, t;
@@ -178,13 +183,14 @@ bool PCA::EigenVectorsDevice()
 
     for (int i = 0; i < mDimensions; i++)
     {
-      float alpha = 1.0f/sqrtf((mCols-1)*mS.at<float>(i));
+      float alpha = 1.0f / sqrtf((mCols - 1) * mS.at<float>(i));
       t = e.col(i);
       cv::gpu::gemm(a, u.col(i), alpha, cv::gpu::GpuMat(), 0.0f, t, cv::GEMM_1_T);
     }
+
     e.download(host_e);
   }
-  catch(const cv::Exception& ex)
+  catch (const cv::Exception &ex)
   {
     ErrorLine("Error: " << ex.what());
     WarningLine("Falling back to cpu");
@@ -201,18 +207,20 @@ void PCA::EigenVectorsGold()
   PROFILE_FUNCTION();
 
   cv::Mat eigen(mCols, mDimensions, CV_32FC1), tmp;
+
   for (int i = 0; i < mDimensions; i++)
   {
-    double alpha = 1.0/sqrt((mCols-1)*mS.at<float>(i));
+    double alpha = 1.0 / sqrt((mCols - 1) * mS.at<float>(i));
     tmp = eigen.col(i);
     cv::gemm(mData, mE.col(i), alpha, cv::Mat(), 0.0, tmp, cv::GEMM_1_T);
   }
+
   mEigen = eigen.t();
 }
 
 void PCA::CovarianceGold(const cv::Mat &data, cv::Mat &cov)
 {
   PROFILE_FUNCTION();
-  double alpha = 1.0/(mCols-1);
+  double alpha = 1.0 / (mCols - 1);
   cv::gemm(data, data, alpha, cv::Mat(), 0.0, cov, cv::GEMM_2_T);
 }

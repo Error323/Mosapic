@@ -4,6 +4,7 @@
 #include "utils/Debugger.hpp"
 #include "utils/Timer.hpp"
 #include "utils/Verbose.hpp"
+#include "utils/MatIO.hpp"
 
 #include <cmath>
 #include <fstream>
@@ -13,6 +14,9 @@
 #include <iostream>
 #include <limits>
 #include <opencv/highgui.h>
+
+extern bool SaveMat( const std::string &filename, const cv::Mat &M);
+extern bool ReadMat( const std::string &filename, cv::Mat &M);
 
 // Unit hexagon (i.e. edge length = 1) with its corners facing north and south
 #define HALF_HEXAGON_WIDTH sinf(M_PI / 3.0f)
@@ -30,7 +34,7 @@
       c--;                                        \
     }                                             \
   } while(0)                                      \
-
+ 
 HexaMosaic::HexaMosaic(
   rcString inSourceImage,
   rcString inDatabase,
@@ -74,16 +78,19 @@ HexaMosaic::HexaMosaic(
   float prev_ratio = 100.0f;
 
   int height = 1;
+
   while (true)
   {
     mDstHeight = height * mHexHeight * .75 + mHexHeight * .25 + height * .25;
     float cur_ratio = mDstWidth / float(mDstHeight);
-    if (fabs(orig_ratio-prev_ratio) < fabs(orig_ratio-cur_ratio))
+
+    if (fabs(orig_ratio - prev_ratio) < fabs(orig_ratio - cur_ratio))
     {
       mHeight = height - 1;
       mDstHeight = mHeight * mHexHeight * .75 + mHexHeight * .25 + mHeight * .25;
       break;
     }
+
     prev_ratio = cur_ratio;
     height++;
   }
@@ -118,7 +125,7 @@ HexaMosaic::HexaMosaic(
         cInt x = i + (mHexRadius * HALF_HEXAGON_WIDTH);
         cInt y = j + mHexRadius;
         mHexMask.at<Uint8>(y, x) = 255;
-        cv::Point2i p(x,y);
+        cv::Point2i p(x, y);
         mHexCoords.push_back(p);
       }
     }
@@ -132,14 +139,17 @@ HexaMosaic::HexaMosaic(
 void HexaMosaic::Im2HexRow(const cv::Mat &in, cv::Mat &out)
 {
   out.create(1, mHexCoords.size(), (mUseGrayscale ? CV_8UC1 : CV_8UC3));
+
   for (int i = 0, n = mHexCoords.size(); i < n; i++)
   {
     cv::Point2i &p = mHexCoords[i];
+
     if (mUseGrayscale)
       out.at<unsigned char>(0, i) = in.at<unsigned char>(p.y, p.x);
     else
       out.at<cv::Vec3b>(0, i) = in.at<cv::Vec3b>(p.y, p.x);
   }
+
   out = out.reshape(1, 1);
 }
 
@@ -187,6 +197,7 @@ void HexaMosaic::Create()
     std::string entry = "eigenvector-" + s.str() + ".jpg";
     cv::imwrite(entry, eigenvec);
   }
+
 #endif // DEBUG
   NoticeLine("[done]");
 
@@ -201,18 +212,17 @@ void HexaMosaic::Create()
   INIT_COUNTER(compress);
   cv::Mat compressed_database(mNumImages, mDimensions, CV_32FC1);
   cv::Mat img, entry, compressed_entry;
-
-  for (int i = 0; i < mNumImages; i++)
   {
-    img = cv::imread(mImages[i], (mUseGrayscale ? 0 : 1));
+    PROFILE("Compress database");
 
-    cv::getRectSubPix(img, cv::Size(mHexWidth, mHexHeight),
-                      cv::Point2f(img.cols / 2.0f, img.rows / 2.0f), entry);
-    cv::Mat data_row;
-    Im2HexRow(entry, data_row);
-    compressed_entry = compressed_database.row(i);
-    pca.Project(data_row, compressed_entry);
-    COUNT_DOWN(i, compress, mNumImages);
+    for (int i = 0; i < mNumImages; i++)
+    {
+      cv::Mat data_row;
+      LoadImage(mImages[i], data_row);
+      compressed_entry = compressed_database.row(i);
+      pca.Project(data_row, compressed_entry);
+      COUNT_DOWN(i, compress, mNumImages);
+    }
   }
   NoticeLine("[done]");
 
@@ -326,6 +336,7 @@ void HexaMosaic::Create()
             split[1].at<Uint8>(y, x) = split[1].at<Uint8>(y, x - 1);
             split[2].at<Uint8>(y, x) = split[2].at<Uint8>(y, x - 1);
           }
+
           x++;
         }
       }
@@ -356,6 +367,20 @@ void HexaMosaic::Create()
   NoticeLine("Resulting image: " << s.str());
 }
 
+void HexaMosaic::LoadImage(rcString inImageName, cv::Mat &out)
+{
+  String img_name = inImageName + ".bin";
+
+  if (ReadMat(img_name, out))
+    return;
+
+  cv::Mat entry, img;
+  img = cv::imread(inImageName, (mUseGrayscale ? 0 : 1));
+  cv::getRectSubPix(img, cv::Size(mHexWidth, mHexHeight),
+                    cv::Point2f(img.cols / 2.0f, img.rows / 2.0f), entry);
+  Im2HexRow(entry, out);
+  SaveMat(img_name, out);
+}
 
 void HexaMosaic::Crawl(const boost::filesystem::path &inPath)
 {
@@ -392,6 +417,7 @@ void HexaMosaic::HexRow2Im(const cv::Mat &in, cv::Mat &out)
 {
   out.create(mHexHeight, mHexWidth, CV_8UC3);
   out.setTo(cv::Scalar(0));
+
   for (int i = 0, n = mHexCoords.size(); i < n; i++)
   {
     cv::Point2i &p = mHexCoords[i];
