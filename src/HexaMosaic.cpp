@@ -7,6 +7,7 @@
 #include "utils/MatIO.hpp"
 
 #include <cmath>
+#include <cstdlib>
 #include <fstream>
 #include <queue>
 #include <algorithm>
@@ -70,6 +71,7 @@ HexaMosaic::HexaMosaic(
   mSrcImg = cv::imread(mSourceImage, 1);
   ASSERT_MSG(mSrcImg.data != NULL && mSrcImg.rows > 0 && mSrcImg.cols > 0, "Invalid input image");
 
+
   // Find mHeight such that the ratio is closest to original
   float orig_ratio = mSrcImg.cols / float(mSrcImg.rows);
   mDstWidth = mWidth * mHexWidth + mWidth * .25;
@@ -109,6 +111,8 @@ HexaMosaic::HexaMosaic(
       mCoords.push_back(cv::Point2i(x, y));
     }
   }
+  srand(0);
+  random_shuffle(mIndices.begin(), mIndices.end());
 
   // Precache hexagon mask
   mHexMask.create(mHexHeight, mHexWidth, CV_8UC1);
@@ -226,7 +230,6 @@ void HexaMosaic::Create()
 
   dx = mHexRadius * unit_dx;
   dy = mHexRadius * unit_dy;
-  random_shuffle(mIndices.begin(), mIndices.end());
   cv::Mat src_entry, tmp_entry, dst_patch, dst_patch_gray, src_patch;
   vInt ids;
   std::vector<cv::Point2i> locations;
