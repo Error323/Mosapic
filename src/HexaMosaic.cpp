@@ -205,18 +205,14 @@ void HexaMosaic::Create()
   Notice("Compress database...");
   INIT_COUNTER(compress);
   cv::Mat compressed_database(mNumImages, mDimensions, CV_32FC1);
-  cv::Mat img, entry, compressed_entry;
+  cv::Mat entry, compressed_entry;
+  for (int i = 0; i < mNumImages; i++)
   {
-    PROFILE("Compress database");
-
-    for (int i = 0; i < mNumImages; i++)
-    {
-      cv::Mat data_row;
-      LoadImage(mImages[i], data_row);
-      compressed_entry = compressed_database.row(i);
-      pca.Project(data_row, compressed_entry);
-      COUNT_DOWN(i, compress, mNumImages);
-    }
+    cv::Mat data_row;
+    LoadImage(mImages[i], data_row);
+    compressed_entry = compressed_database.row(i);
+    pca.Project(data_row, compressed_entry);
+    COUNT_DOWN(i, compress, mNumImages);
   }
   NoticeLine("[done]");
 
