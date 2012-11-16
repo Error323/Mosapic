@@ -74,7 +74,6 @@ private:
   int mDstHeight;
 
 
-  cv::Mat mDatabase;
   cv::Mat mHexMask;
   cv::Mat mSrcImg;
 

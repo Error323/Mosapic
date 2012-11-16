@@ -30,7 +30,7 @@
       c--;                                        \
     }                                             \
   } while(0)                                      \
- 
+
 HexaMosaic::HexaMosaic(
   rcString inSourceImage,
   rcString inDatabase,
@@ -149,10 +149,6 @@ void HexaMosaic::Create()
   cFloat unit_dx = HEXAGON_WIDTH;
   cFloat unit_dy = HEXAGON_HEIGHT * (3.0f / 4.0f);
 
-  // prepare destination image
-  cv::Mat dst_img(mDstHeight, mDstWidth, (mUseGrayscale ? CV_8UC1 : CV_8UC3));
-  cv::Mat dst_img_gray(mDstHeight, mDstWidth, CV_8UC1);
-
   // Compute pca input data from source image
   cv::Mat pca_input(mCoords.size(), mHexCoords.size() * (mUseGrayscale ? 1 : 3), CV_8UC1);
   PCA pca(mCoords.size(), mHexCoords.size() * (mUseGrayscale ? 1 : 3));
@@ -223,6 +219,11 @@ void HexaMosaic::Create()
   // Construct mosaic
   INIT_COUNTER(mosaic);
   Notice("Construct mosaic...");
+
+  // prepare destination image
+  cv::Mat dst_img(mDstHeight, mDstWidth, (mUseGrayscale ? CV_8UC1 : CV_8UC3));
+  cv::Mat dst_img_gray(mDstHeight, mDstWidth, CV_8UC1);
+
   dx = mHexRadius * unit_dx;
   dy = mHexRadius * unit_dy;
   random_shuffle(mIndices.begin(), mIndices.end());
@@ -285,10 +286,12 @@ void HexaMosaic::Create()
     dst_patch = dst_img(roi);
     dst_patch_gray = dst_img_gray(roi);
     src_patch = cv::imread(mImages[best_id], (mUseGrayscale ? 0 : 1));
-    if (!mUseGrayscale)
-      ColorBalance(src_patch, pca_input.row(mIndices[i]));
     cv::getRectSubPix(src_patch, cv::Size(mHexWidth, mHexHeight),
                       cv::Point2f(src_patch.cols / 2.0f, src_patch.rows / 2.0f), entry);
+
+    if (!mUseGrayscale)
+      ColorBalance(entry, pca_input.row(mIndices[i]));
+
     entry.copyTo(dst_patch, mHexMask);
     mHexMask.copyTo(dst_patch_gray, mHexMask);
 #ifdef DEBUG
@@ -405,7 +408,7 @@ void HexaMosaic::ColorBalance(cv::Mat &ioSrc, const cv::Mat &inDst)
 
   cv::Mat src_lab;
   cvtColor(ioSrc, src_lab, CV_RGB2Lab);
-  cv::Scalar src_lab_mean = cv::mean(src_lab);
+  cv::Scalar src_lab_mean = cv::mean(src_lab, mHexMask);
 
   // Calculate deltas
   cv::Scalar deltas;
