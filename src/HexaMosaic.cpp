@@ -305,8 +305,6 @@ void HexaMosaic::Create()
   // Stich edges with neighbouring pixel on x-axis
   cv::Mat dst_binary;
   cv::threshold(dst_img_gray, dst_binary, 0.0, 255.0, CV_THRESH_BINARY_INV);
-  std::vector<cv::Mat> split;
-  cv::split(dst_img, split);
 
   for (int y = 0; y < dst_binary.rows; y++)
   {
@@ -316,16 +314,13 @@ void HexaMosaic::Create()
       {
         while (x < dst_binary.cols && dst_binary.at<Uint8>(y, x) > 0)
         {
-          split[0].at<Uint8>(y, x) = split[0].at<Uint8>(y, x - 1);
-          split[1].at<Uint8>(y, x) = split[1].at<Uint8>(y, x - 1);
-          split[2].at<Uint8>(y, x) = split[2].at<Uint8>(y, x - 1);
+          dst_img.at<cv::Vec3b>(y, x) = dst_img.at<cv::Vec3b>(y, x - 1);
           x++;
         }
       }
     }
   }
 
-  cv::merge(split, dst_img);
 
   // Write image to disk
   int p = mDatabaseDir.substr(0, mDatabaseDir.size() - 1).find_last_of('/') + 1;
