@@ -55,10 +55,9 @@ include_directories (${hexapic_BINARY_DIR})
 # Find 3rd party libraries and include their headers
 #-------------------------------------------------------------------------------
 find_package (Boost COMPONENTS system filesystem regex program_options REQUIRED)
-find_package (OpenCV COMPONENTS opencv_core REQUIRED)
+find_package (OpenCV COMPONENTS core highgui gpu imgproc REQUIRED)
 
 if (ENABLE_CUDA)
-  find_package (OpenCV COMPONENTS opencv_gpu REQUIRED)
   add_definitions (-DENABLE_CUDA_DEVICE)
 endif (ENABLE_CUDA)
 
@@ -92,7 +91,7 @@ message (STATUS "   C flags (Release):"          ${CMAKE_C_FLAGS} ${CMAKE_C_FLAG
 message (STATUS "   C flags (Debug):"            ${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_DEBUG})
 message (STATUS "   C flags (RelWithDebInfo):"   ${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_RELWITHDEBINFO})
 message (STATUS "")
-message (STATUS " CMakeflags:")
+message (STATUS " CMakeflags (${CMAKE_PROJECT_NAME}):")
 message (STATUS "   CMAKE_BUILD_TYPE "           ${CMAKE_BUILD_TYPE})
 message (STATUS "   ENABLE_CUDA      "           ${ENABLE_CUDA})
 message (STATUS "   ENABLE_PROFILING "           ${ENABLE_PROFILING})
