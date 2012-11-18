@@ -1,6 +1,9 @@
 #include "HexaCrawler.hpp"
 #include "HexaMosaic.hpp"
 
+#include "utils/Debugger.hpp"
+#include "utils/Verbose.hpp"
+
 #include <iostream>
 #include <sstream>
 
@@ -14,15 +17,22 @@ void HexaCrawler::Crawl(rcString inSrcDir, rcString inDstDir, cInt inTileSize)
 
   mTileSize = inTileSize;
   mImgCount = 0;
+  mExistCount = 0;
+  mFailedCount = 0;
+  mClashCount = 0;
 
   if (!boost::filesystem::exists(inDstDir))
   {
-    std::cout << "Directory `" << inDstDir << "' doesn't exist yet, creating..." << std::endl;
+    NoticeLine("Directory `" << inDstDir << "' doesn't exist yet, creating...");
     boost::filesystem::create_directory(inDstDir);
   }
 
   Crawl(inSrcDir);
-  std::cout << std::endl << "Processed " << mImgCount << " images." << std::endl;
+  NoticeLine("");
+  NoticeLine("Failed    " << mFailedCount << " images");
+  NoticeLine("Existing  " << mExistCount << " images");
+  NoticeLine("Clashed   " << mClashCount << " images");
+  NoticeLine("Processed " << mImgCount << " images");
 }
 
 void HexaCrawler::Crawl(const boost::filesystem::path &inPath)
@@ -51,7 +61,7 @@ void HexaCrawler::Crawl(const boost::filesystem::path &inPath)
     }
     catch (const std::exception &ex)
     {
-      std::cerr << i->path() << " " << ex.what() << std::endl;
+      ErrorLine(i->path() << " " << ex.what());
     }
   }
 }
@@ -72,22 +82,47 @@ void HexaCrawler::Resize(cv::Mat &outImg)
 
 void HexaCrawler::Process(rcString inImgName)
 {
-  std::cout << "Processing `" << inImgName << std::flush;
+  Notice("Processing `" << inImgName << "'");
+
+  size_t s_pos = inImgName.find_last_of('/') + 1;
+  size_t e_pos = inImgName.find_last_of('.') - s_pos;
+  std::string img_dst = mDstDir + inImgName.substr(s_pos, e_pos) + ".tiff";
 
   cv::Mat img_color = cv::imread(inImgName);
 
   if (img_color.data == NULL || img_color.rows < mTileSize || img_color.cols < mTileSize)
   {
-    std::cout << " [failed]" << std::endl;
+    ErrorLine(" [failed]");
+    mFailedCount++;
     return;
   }
 
   Resize(img_color);
 
-  size_t s_pos = inImgName.find_last_of('/') + 1;
-  size_t e_pos = inImgName.find_last_of('.') - s_pos;
-  std::string img_dst = mDstDir + inImgName.substr(s_pos, e_pos) + ".tiff";
+  int clash_count = 0;
+  while (boost::filesystem::exists(img_dst))
+  {
+    cv::Mat img_existing = cv::imread(img_dst);
+    cv::Mat equal = (img_existing == img_color);
+    int sum = cv::sum(equal)[0];
+    if (sum == img_color.rows*img_color.cols*255)
+    {
+      WarningLine(" [exists]");
+      mExistCount++;
+      return;
+    }
+    else
+    {
+      Warning(" [clash]");
+      std::stringstream ss;
+      ss << clash_count;
+      img_dst = mDstDir + inImgName.substr(s_pos, e_pos) + "-" + ss.str() + ".tiff";
+      clash_count++;
+      mClashCount++;
+    }
+  }
+
   cv::imwrite(img_dst, img_color);
   mImgCount++;
-  std::cout << " -> " << img_dst << " [done]" << std::endl;
+  NoticeLine(" -> " << img_dst << " [done]");
 }
