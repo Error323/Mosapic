@@ -13,11 +13,17 @@ set (CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g")
 
 set (CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/modules")
 
+option (ENABLE_OPENMP "Enable/disable openmp (used by Eigen3)" ON)
 option (ENABLE_PROFILING "Enable/disable profiling" OFF)
 
 if (NOT CMAKE_BUILD_TYPE)
   set (CMAKE_BUILD_TYPE "Release")
 endif (NOT CMAKE_BUILD_TYPE)
+
+if (ENABLE_OPENMP)
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+endif (ENABLE_OPENMP)
+
 if (ENABLE_PROFILING)
   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lrt")
   add_definitions (-DENABLE_PROFILING)
@@ -94,4 +100,5 @@ message (STATUS "")
 message (STATUS " CMakeflags (${CMAKE_PROJECT_NAME}):")
 message (STATUS "   CMAKE_BUILD_TYPE            ${CMAKE_BUILD_TYPE}")
 message (STATUS "   ENABLE_PROFILING            ${ENABLE_PROFILING}")
+message (STATUS "   ENABLE_OPENMP               ${ENABLE_OPENMP}")
 message (STATUS "")

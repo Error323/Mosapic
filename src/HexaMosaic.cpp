@@ -133,9 +133,9 @@ HexaMosaic::HexaMosaic(
     }
   }
 
-#ifdef DEBUG
+#ifndef NDEBUG
   cv::imwrite("hexmask.jpg", mHexMask);
-#endif // DEBUG
+#endif // NDEBUG
 }
 
 void HexaMosaic::Im2HexRow(const cv::Mat &in, cv::Mat &out)
@@ -180,14 +180,15 @@ void HexaMosaic::Create()
 
   Notice("Performing pca...");
   pca.Solve(mDimensions);
-#ifdef DEBUG
+#ifndef NDEBUG
 
   // Construct eigenvector images for debugging
   for (int i = 0; i < mDimensions; i++)
   {
     cv::Mat eigenvec;
     cv::Mat correct;
-    cv::normalize(pca.GetEigenVector(i), eigenvec, 255, 0, cv::NORM_MINMAX);
+    pca.GetEigenVector(i, eigenvec);
+    cv::normalize(eigenvec, eigenvec, 255, 0, cv::NORM_MINMAX);
     eigenvec.convertTo(correct, CV_8UC3);
     HexRow2Im(correct, eigenvec);
     std::stringstream s;
@@ -294,23 +295,23 @@ void HexaMosaic::Create()
     ColorBalance(entry, pca_input.row(mIndices[i]));
     entry.copyTo(dst_patch, mHexMask);
     mHexMask.copyTo(dst_patch_gray, mHexMask);
-#ifdef DEBUG
+#ifndef NDEBUG
     std::string img_name = mImages[best_id].substr(mImages[best_id].find_last_of('/') + 1);
     cv::putText(dst_img, img_name,
                 cv::Point(src_x + dx / 3.0f, src_y + dy / 1.5f),
                 CV_FONT_HERSHEY_PLAIN, 2.0,
                 cv::Scalar(255, 0, 255),
                 2);
-#endif // DEBUG
+#endif // NDEBUG
     COUNT_DOWN(i, mosaic, n);
   }
 
   // Stich edges with neighbouring pixel on x-axis
   cv::threshold(dst_img_gray, dst_img_gray, 0.0, 255.0, CV_THRESH_BINARY_INV);
 
-#ifdef DEBUG
+#ifndef NDEBUG
   cv::imwrite("binary.png", dst_img_gray);
-#endif // DEBUG
+#endif // NDEBUG
 
   for (int y = 0; y < dst_img_gray.rows; y++)
   {

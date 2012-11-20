@@ -8,7 +8,7 @@ std::ofstream                    Verbose::sStream;
 Verbose                         *Verbose::sInstance = NULL;
 bool                             Verbose::sShouldUseColor = false;
 
-#ifdef DEBUG
+#ifndef NDEBUG
 Uint32 Verbose::sMinLevel = Verbose::DBG;
 #else
 Uint32 Verbose::sMinLevel = Verbose::NTC;
