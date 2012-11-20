@@ -1,4 +1,7 @@
 #include "Timer.hpp"
+
+#ifdef ENABLE_PROFILING
+
 #include "Verbose.hpp"
 
 #include <algorithm>
@@ -46,10 +49,6 @@ Timer::~Timer()
 
 String Timer::GetReport(int inPrecision)
 {
-#ifndef ENABLE_PROFILING
-  (void) inPrecision;
-  return "";
-#else
   std::string report;
   report += SpacePadding("Name",  NAME_SPACING);
   report += SpacePadding("Min",   CELL_SPACING);
@@ -92,7 +91,6 @@ String Timer::GetReport(int inPrecision)
 
   report += Verbose::Colorize("\nTimings are in seconds...\n", Verbose::YELLOW);
   return report;
-#endif
 }
 
 String Timer::SpacePadding(rcString inString, int inSpaces)
@@ -108,3 +106,5 @@ String Timer::SpacePadding(rcString inString, int inSpaces)
 
   return padded;
 }
+
+#endif // ENABLE_PROFILING

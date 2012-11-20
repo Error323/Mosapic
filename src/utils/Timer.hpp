@@ -10,9 +10,6 @@
 
 #ifdef ENABLE_PROFILING
 #define PROFILE(name) Timer ___t(name)
-#else
-#define PROFILE(name)
-#endif
 
 #define NAME_SPACING 50
 #define CELL_SPACING 8
@@ -53,5 +50,15 @@ private:
   double mEndTime;
   cString mTaskName;
 };
+
+#else
+#define PROFILE(name)
+class Timer
+{
+
+public:
+  static String GetReport(int inPrecision = 4) {(void) inPrecision; return "";}
+};
+#endif
 
 #endif
