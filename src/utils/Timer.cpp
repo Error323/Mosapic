@@ -6,6 +6,7 @@
 #include <iostream>
 #include <iomanip>
 #include <limits>
+#include <unistd.h>
 
 std::vector<String>      Timer::sTasks;
 std::map<String, Uint32> Timer::sTaskCounters;
@@ -26,18 +27,18 @@ Timer::Timer(rcString inName):
     sMinTimings[inName]   = std::numeric_limits<double>::max();
   }
 
-  mStartTime = clock();
+  mStartTime = getRealTime();
 }
 
 Timer::~Timer()
 {
-  mEndTime = clock();
+  mEndTime = getRealTime();
 
   if (!mIsInitialized)
     return;
 
   sTaskCounters[mTaskName]++;
-  double diff_time = (mEndTime - mStartTime) / (double)CLOCKS_PER_SEC;
+  double diff_time = (mEndTime - mStartTime);
   sSumTimings[mTaskName] += diff_time;
   sMinTimings[mTaskName] = std::min<double>(sMinTimings[mTaskName], diff_time);
   sMaxTimings[mTaskName] = std::max<double>(sMaxTimings[mTaskName], diff_time);
