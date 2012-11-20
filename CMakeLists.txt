@@ -6,18 +6,20 @@ cmake_minimum_required (VERSION 2.8)
 # General Settings
 #-------------------------------------------------------------------------------
 set (CMAKE_COLOR_MAKEFILE ON)
-set (CMAKE_CXX_FLAGS "-Wall -Wextra ")
-set (CMAKE_CXX_FLAGS_DEBUG "-O0 -g -DDEBUG")
-set (CMAKE_CXX_FLAGS_RELEASE "-O3")
-set (CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g -DDEBUG")
+set (CMAKE_CXX_FLAGS "-Wall -Wextra")
+set (CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
+set (CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG")
+set (CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g")
 
-set (ENABLE_PROFILING FALSE CACHE BOOL "Enable/Disable profiling")
-set (ENABLE_CUDA TRUE CACHE BOOL "Enable/Disable cuda")
+set (CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/modules")
+
+option (ENABLE_PROFILING "Enable/disable profiling" OFF)
 
 if (NOT CMAKE_BUILD_TYPE)
   set (CMAKE_BUILD_TYPE "Release")
 endif (NOT CMAKE_BUILD_TYPE)
 if (ENABLE_PROFILING)
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lrt")
   add_definitions (-DENABLE_PROFILING)
 endif (ENABLE_PROFILING)
 
@@ -55,15 +57,13 @@ include_directories (${hexapic_BINARY_DIR})
 # Find 3rd party libraries and include their headers
 #-------------------------------------------------------------------------------
 find_package (Boost COMPONENTS system filesystem regex program_options REQUIRED)
-find_package (OpenCV COMPONENTS core highgui gpu imgproc REQUIRED)
-
-if (ENABLE_CUDA)
-  add_definitions (-DENABLE_CUDA_DEVICE)
-endif (ENABLE_CUDA)
+find_package (OpenCV COMPONENTS core highgui imgproc REQUIRED)
+find_package (Eigen3 REQUIRED)
 
 include_directories (
 	${Boost_INCLUDE_DIRS}
 	${OpenCV_INCLUDE_DIR}
+  ${EIGEN3_INCLUDE_DIR}
 )
 
 
@@ -82,17 +82,16 @@ target_link_libraries (${CMAKE_PROJECT_NAME}
 #-------------------------------------------------------------------------------
 message (STATUS "")
 message (STATUS " C/C++:")
-message (STATUS "   C++ Compiler:"               ${CMAKE_CXX_COMPILER})
-message (STATUS "   C++ flags (Release):"        ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE})
-message (STATUS "   C++ flags (Debug):"          ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_DEBUG})
-message (STATUS "   C++ flags (RelWithDebInfo):" ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELWITHDEBINFO})
-message (STATUS "   C Compiler:"                 ${CMAKE_C_COMPILER} ${CMAKE_C_COMPILER_ARG1})
-message (STATUS "   C flags (Release):"          ${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_RELEASE})
-message (STATUS "   C flags (Debug):"            ${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_DEBUG})
-message (STATUS "   C flags (RelWithDebInfo):"   ${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_RELWITHDEBINFO})
+message (STATUS "   C++ Compiler:               ${CMAKE_CXX_COMPILER}")
+message (STATUS "   C++ flags (Release):        ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE}")
+message (STATUS "   C++ flags (Debug):          ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_DEBUG}")
+message (STATUS "   C++ flags (RelWithDebInfo): ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
+message (STATUS "   C Compiler:                 ${CMAKE_C_COMPILER} ${CMAKE_C_COMPILER_ARG1}")
+message (STATUS "   C flags (Release):          ${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_RELEASE}")
+message (STATUS "   C flags (Debug):            ${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_DEBUG}")
+message (STATUS "   C flags (RelWithDebInfo):   ${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_RELWITHDEBINFO}")
 message (STATUS "")
 message (STATUS " CMakeflags (${CMAKE_PROJECT_NAME}):")
-message (STATUS "   CMAKE_BUILD_TYPE "           ${CMAKE_BUILD_TYPE})
-message (STATUS "   ENABLE_CUDA      "           ${ENABLE_CUDA})
-message (STATUS "   ENABLE_PROFILING "           ${ENABLE_PROFILING})
+message (STATUS "   CMAKE_BUILD_TYPE            ${CMAKE_BUILD_TYPE}")
+message (STATUS "   ENABLE_PROFILING            ${ENABLE_PROFILING}")
 message (STATUS "")
