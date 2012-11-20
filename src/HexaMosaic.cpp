@@ -4,7 +4,6 @@
 #include "utils/Debugger.hpp"
 #include "utils/Timer.hpp"
 #include "utils/Verbose.hpp"
-#include "utils/MatIO.hpp"
 
 #include <cmath>
 #include <cstdlib>
@@ -15,9 +14,6 @@
 #include <iostream>
 #include <limits>
 #include <opencv/highgui.h>
-
-extern bool SaveMat( const std::string &filename, const cv::Mat &M);
-extern bool ReadMat( const std::string &filename, cv::Mat &M);
 
 // Unit hexagon (i.e. edge length = 1) with its corners facing north and south
 #define HALF_HEXAGON_WIDTH sinf(M_PI / 3.0f)
@@ -298,8 +294,8 @@ void HexaMosaic::Create()
 #ifndef NDEBUG
     std::string img_name = mImages[best_id].substr(mImages[best_id].find_last_of('/') + 1);
     cv::putText(dst_img, img_name,
-                cv::Point(src_x + dx / 3.0f, src_y + dy / 1.5f),
-                CV_FONT_HERSHEY_PLAIN, 2.0,
+                cv::Point(src_x + dx / 3.0f - mHexWidth/2, src_y + dy / 1.5f),
+                CV_FONT_HERSHEY_PLAIN, 0.8,
                 cv::Scalar(255, 0, 255),
                 2);
 #endif // NDEBUG
@@ -352,17 +348,11 @@ void HexaMosaic::Create()
 
 void HexaMosaic::LoadImage(rcString inImageName, cv::Mat &out)
 {
-  String img_name = inImageName + ".bin";
-
-  if (ReadMat(img_name, out))
-    return;
-
   cv::Mat entry, img;
   img = cv::imread(inImageName, 1);
   cv::getRectSubPix(img, cv::Size(mHexWidth, mHexHeight),
                     cv::Point2f(img.cols / 2.0f, img.rows / 2.0f), entry);
   Im2HexRow(entry, out);
-  SaveMat(img_name, out);
 }
 
 void HexaMosaic::Crawl(const boost::filesystem::path &inPath)

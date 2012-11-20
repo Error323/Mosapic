@@ -6,7 +6,7 @@ THREADS=2
 WIDTH=20
 DIM=10
 RAD=20
-CBR=1.0
+CBR=0.8
 
 usage()
 {
