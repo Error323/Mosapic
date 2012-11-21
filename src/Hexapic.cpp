@@ -48,7 +48,10 @@ int main(int argc, char **argv)
 
   if (vm.count("version"))
   {
-    std::cout << HUMAN_NAME << std::endl;
+    std::cout << std::endl << HUMAN_NAME << std::endl;
+    std::cout << "  C Compiler:   " << C_COMPILER << " " << C_FLAGS << std::endl;
+    std::cout << "  CXX Compiler: " << CXX_COMPILER << " " << CXX_FLAGS << std::endl;
+    std::cout << std::endl;
   }
   else
   if (vm.count("image-dir") && vm.count("output-dir"))
