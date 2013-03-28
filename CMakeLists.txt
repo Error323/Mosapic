@@ -29,8 +29,8 @@ if (ENABLE_OPENMP)
 endif (ENABLE_OPENMP)
 
 if (ENABLE_PROFILING)
-  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lrt")
-  add_definitions (-DENABLE_PROFILING)
+  set (CMAKE_BUILD_TYPE "Release")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -pg")
 endif (ENABLE_PROFILING)
 
 
@@ -38,17 +38,11 @@ endif (ENABLE_PROFILING)
 # Extract and set the version
 #-------------------------------------------------------------------------------
 execute_process (
-	COMMAND git describe --tags
-	OUTPUT_VARIABLE GIT_VERSION
+	COMMAND git describe --tags --always
+	OUTPUT_VARIABLE VERSION
 	ERROR_VARIABLE GIT_ERROR
 	OUTPUT_STRIP_TRAILING_WHITESPACE
 )
-
-if (GIT_VERSION)
-	set (VERSION ${GIT_VERSION})
-else (NOT GIT_VERSION)
-	set (VERSION "0.0.0")
-endif (GIT_VERSION)
 
 configure_file (
 	"${hexapic_SOURCE_DIR}/cmake/Version.hpp.in"
