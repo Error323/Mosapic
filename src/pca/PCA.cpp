@@ -1,7 +1,6 @@
 #include "PCA.hpp"
 
 #include "../utils/Debugger.hpp"
-#include "../utils/Timer.hpp"
 #include "../utils/Verbose.hpp"
 
 PCA::PCA(const int rows, const int cols):
@@ -10,8 +9,6 @@ PCA::PCA(const int rows, const int cols):
   mCurRow(0),
   mDimensions(0)
 {
-  PROFILE_FUNCTION();
-
   ASSERT(mRows <= mCols);
 
   mData.resize(mRows, mCols);
@@ -21,8 +18,6 @@ PCA::PCA(const int rows, const int cols):
 
 void PCA::AddRow(const RowVectorXf &row)
 {
-  PROFILE_FUNCTION();
-
   ASSERT(row.cols() == mCols);
 
   mData.row(mCurRow) = row;
@@ -33,8 +28,6 @@ void PCA::AddRow(const RowVectorXf &row)
 
 void PCA::AddRow(const cv::Mat &row)
 {
-  PROFILE_FUNCTION();
-
   RowVectorXf e_row;
   CvMat2EigRow(row, e_row);
   AddRow(e_row);
@@ -42,8 +35,6 @@ void PCA::AddRow(const cv::Mat &row)
 
 void PCA::Solve(const int dimensions)
 {
-  PROFILE_FUNCTION();
-
   mDimensions = dimensions;
   ASSERT(mDimensions > 0 && mDimensions < mRows);
   ASSERT(mCurRow == mRows);
@@ -84,16 +75,10 @@ void PCA::Solve(const int dimensions)
 
 void PCA::Project(const MatrixXf &data, MatrixXf &projected)
 {
-  PROFILE_FUNCTION();
-
   ASSERT(mDimensions > 0 && mDimensions < mRows);
   ASSERT(data.cols() == mCols);
 
-  MatrixXf norm_data = data;
-  for (int i = 0, n = norm_data.rows(); i < n; i++)
-    norm_data.row(i) -= mMean;
-
-  projected = norm_data * mEigen.transpose();
+  projected = (data.rowwise() - mMean) * mEigen.transpose();
 }
 
 void PCA::Project(const cv::Mat &data, cv::Mat &projected)
@@ -106,16 +91,10 @@ void PCA::Project(const cv::Mat &data, cv::Mat &projected)
 
 void PCA::BackProject(const MatrixXf &projected, MatrixXf &reduced)
 {
-  PROFILE_FUNCTION();
-
   ASSERT(mDimensions > 0 && mDimensions < mRows);
   ASSERT(projected.cols() == mDimensions);
 
-  MatrixXf mean(projected.rows(), mCols);
-  for (int i = 0, n = mean.rows(); i < n; i++)
-    mean.row(i) = mMean;
-
-  reduced = projected * mEigen + mean;
+  reduced = (projected * mEigen).rowwise() + mMean;
 }
 
 void PCA::BackProject(const cv::Mat &projected, cv::Mat &reduced)
@@ -128,8 +107,6 @@ void PCA::BackProject(const cv::Mat &projected, cv::Mat &reduced)
 
 void PCA::GetEigenVector(const int i, RowVectorXf &eigenvector)
 {
-  PROFILE_FUNCTION();
-
   ASSERT(i >= 0 && i < mDimensions);
   eigenvector = mEigen.row(i);
 }

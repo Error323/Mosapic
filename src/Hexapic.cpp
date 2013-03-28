@@ -7,7 +7,6 @@
 #include "HexaCrawler.hpp"
 #include "HexaMosaic.hpp"
 #include "utils/Types.hpp"
-#include "utils/Timer.hpp"
 #include "utils/Verbose.hpp"
 
 namespace po = boost::program_options;
@@ -100,8 +99,6 @@ int main(int argc, char **argv)
     std::cout << std::endl << hexapic << std::endl;
     return 1;
   }
-
-  Notice(Timer::GetReport(1));
 
   return 0;
 }

@@ -2,7 +2,6 @@
 
 #include "pca/PCA.hpp"
 #include "utils/Debugger.hpp"
-#include "utils/Timer.hpp"
 #include "utils/Verbose.hpp"
 
 #include <cmath>
