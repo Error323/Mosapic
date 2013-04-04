@@ -81,7 +81,7 @@ fill_slots()
       tput setaf $((i + 1))
       echo ${JOBS[cur_job]}
       tput setaf sgr0
-      time ./${JOBS[$cur_job]} &
+      ./${JOBS[$cur_job]} > /dev/null &
       SLOT[i]=$!
       cur_job=$((cur_job + 1))
     fi
