@@ -4,9 +4,6 @@
 #include "utils/Debugger.hpp"
 #include "utils/Verbose.hpp"
 
-#include <iostream>
-#include <sstream>
-
 void HexaCrawler::Crawl(const QDir &input, const QDir &output, const int tileSize)
 {
   mDstDir = output;
