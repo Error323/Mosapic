@@ -1,13 +1,8 @@
 #ifndef HEXACRAWLER_HDR
 #define HEXACRAWLER_HDR
 
-#include "utils/Types.hpp"
-#include <boost/filesystem.hpp>
-#include <boost/regex.hpp>
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
-
-DECLARE_CLASS(HexaCrawler)
+#include <QtCore>
+#include <QImage>
 
 class HexaCrawler
 {
@@ -19,8 +14,8 @@ public:
     mClashCount(0) {}
   ~HexaCrawler() {}
 
-  void Crawl(rcString inSrcDir, rcString inDstDir, cInt inTileSize);
-  void Resize(cv::Mat &outImg);
+  void Crawl(const QDir &input, const QDir &output, const int tileSize);
+  void Resize(QImage &image);
 
 private:
   int mImgCount;
@@ -28,10 +23,11 @@ private:
   int mFailedCount;
   int mClashCount;
   int mTileSize;
-  String mDstDir;
+  QDir mDstDir;
 
-  void Crawl(const boost::filesystem::path &inPath);
-  void Process(rcString inImgName);
+  void Crawl(const QDir &dir);
+  void Process(const QFileInfo &info);
+  bool Exists(const QImage &a, const QImage &b);
 };
 
 #endif // HEXACRAWLER_HDR

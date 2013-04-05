@@ -83,15 +83,22 @@ int main(int argc, char *argv[])
       }
     }
 
-    QDir dir(image_dir);
-    if (!dir.exists())
+    QDir input(image_dir);
+    if (!input.exists())
       FatalLine("Error: Directory `" << image_dir << "' does not exist");
+
+    QDir output(output_dir);
+    if (output.exists())
+      WarningLine("Warning: Directory `" << output_dir << "' already exists");
+    else
+    if (!QDir().mkpath(output.absolutePath()))
+      FatalLine("Error: Directory `" << output_dir << "' could not be created");
 
     if (tile_size <= 0)
       FatalLine("Error: Tile size `" << tile_size << "' should be > 0");
 
     HexaCrawler hc;
-    hc.Crawl(image_dir, output_dir, tile_size);
+    hc.Crawl(input, output, tile_size);
   }
   else
   if (argc == 11 || argc == 12)

@@ -7,27 +7,17 @@
 #include <iostream>
 #include <sstream>
 
-void HexaCrawler::Crawl(rcString inSrcDir, rcString inDstDir, cInt inTileSize)
+void HexaCrawler::Crawl(const QDir &input, const QDir &output, const int tileSize)
 {
-  char c = inDstDir.at(inDstDir.size() - 1);
-  mDstDir = inDstDir;
+  mDstDir = output;
 
-  if (c != '/')
-    mDstDir += "/";
-
-  mTileSize = inTileSize;
+  mTileSize = tileSize;
   mImgCount = 0;
   mExistCount = 0;
   mFailedCount = 0;
   mClashCount = 0;
 
-  if (!boost::filesystem::exists(inDstDir))
-  {
-    NoticeLine("Directory `" << inDstDir << "' doesn't exist yet, creating...");
-    boost::filesystem::create_directory(inDstDir);
-  }
-
-  Crawl(inSrcDir);
+  Crawl(input);
   NoticeLine("");
   NoticeLine("Failed    " << mFailedCount << " images");
   NoticeLine("Existing  " << mExistCount << " images");
@@ -35,94 +25,82 @@ void HexaCrawler::Crawl(rcString inSrcDir, rcString inDstDir, cInt inTileSize)
   NoticeLine("Processed " << mImgCount << " images");
 }
 
-void HexaCrawler::Crawl(const boost::filesystem::path &inPath)
+void HexaCrawler::Crawl(const QDir &dir)
 {
-  static boost::match_results<std::string::const_iterator> what;
-  static boost::regex img_ext(".*(bmp|BMP|jpg|JPG|jpeg|JPEG|png|PNG|tiff|TIFF)");
+  QFileInfoList list = dir.entryInfoList();
 
-  boost::filesystem::directory_iterator n;
-
-  for (boost::filesystem::directory_iterator i(inPath); i != n; ++i)
+  for (int i = 0; i < list.size(); i++)
   {
-    try
-    {
-      if (boost::filesystem::is_directory(i->status()))
-      {
-        Crawl(i->path());
-      }
-      else
-      {
-        if (boost::filesystem::is_regular_file(i->status()) &&
-            boost::regex_match(i->path().string(), what, img_ext, boost::match_default))
-        {
-          Process(i->path().string());
-        }
-      }
-    }
-    catch (const std::exception &ex)
-    {
-      ErrorLine(i->path() << " " << ex.what());
-    }
+    QFileInfo &info = list[i];
+    if (info.fileName() == "." || info.fileName() == "..")
+      continue;
+
+    if (info.isDir())
+      Crawl(info.absoluteFilePath());
+    else
+      Process(info);
   }
 }
 
-void HexaCrawler::Resize(cv::Mat &outImg)
+void HexaCrawler::Resize(QImage &image)
 {
-  int min = std::min<int>(outImg.rows, outImg.cols);
+  int min = std::min<int>(image.width(), image.height());
   int width  = min - (min % mTileSize);
   int height = min - (min % mTileSize);
-  cv::Mat img_sub;
-  cv::Size size(width, height);
-  cv::Point2f center(outImg.cols / 2, outImg.rows / 2);
-  cv::getRectSubPix(outImg, size, center, img_sub);
-  cv::Mat img_sub_blur;
-  cv::blur(img_sub, img_sub_blur, cv::Size(3, 3));
-  cv::resize(img_sub_blur, outImg, cv::Size(mTileSize, mTileSize));
+  int x = image.width() / 2 - width / 2;
+  int y = image.height() / 2 - height / 2;
+
+  image = image.copy(x, y, width, height).scaled(mTileSize, mTileSize);
 }
 
-void HexaCrawler::Process(rcString inImgName)
+bool HexaCrawler::Exists(const QImage &a, const QImage &b)
 {
-  Notice("Processing `" << inImgName << "'");
+  if (a.width() != b.width() || a.height() != b.height())
+    return false;
 
-  size_t s_pos = inImgName.find_last_of('/') + 1;
-  size_t e_pos = inImgName.find_last_of('.') - s_pos;
-  std::string img_dst = mDstDir + inImgName.substr(s_pos, e_pos) + ".tiff";
+  for (int i = 0; i < a.numBytes(); i++)
+    if (a.bits()[i] != b.bits()[i])
+      return false;
 
-  cv::Mat img_color = cv::imread(inImgName);
+  return true;
+}
 
-  if (img_color.data == NULL || img_color.rows < mTileSize || img_color.cols < mTileSize)
+void HexaCrawler::Process(const QFileInfo &info)
+{
+  QImage image(info.absoluteFilePath());
+
+  Notice("Processing `" << qPrintable(info.fileName()) << "'...");
+  if (image.isNull() || image.width() < mTileSize || image.height() < mTileSize)
   {
-    ErrorLine(" [failed]");
+    ErrorLine("[failed]");
     mFailedCount++;
     return;
   }
 
-  Resize(img_color);
+  Resize(image);
+
+  QFileInfo file(mDstDir.absolutePath() + "/" + info.baseName() + ".tiff");
 
   int clash_count = 0;
-  while (boost::filesystem::exists(img_dst))
+  while (file.exists())
   {
-    cv::Mat img_existing = cv::imread(img_dst);
-    cv::Mat equal = (img_existing == img_color);
-    int sum = cv::sum(equal)[0];
-    if (sum == img_color.rows*img_color.cols*255)
+    QImage existing(file.absoluteFilePath());
+    if (Exists(existing, image))
     {
-      WarningLine(" [exists]");
+      ErrorLine("[exists]");
       mExistCount++;
       return;
     }
     else
     {
-      Warning(" [clash]");
-      std::stringstream ss;
-      ss << clash_count;
-      img_dst = mDstDir + inImgName.substr(s_pos, e_pos) + "-" + ss.str() + ".tiff";
+      Warning("[clash]");
+      file.setFile(mDstDir.absolutePath() + "/" + info.baseName() + "-" + QString::number(clash_count) + ".tiff");
       clash_count++;
       mClashCount++;
     }
   }
 
-  cv::imwrite(img_dst, img_color);
+  image.save(file.absoluteFilePath());
   mImgCount++;
-  NoticeLine(" -> " << img_dst << " [done]");
+  NoticeLine("[done]");
 }
