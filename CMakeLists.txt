@@ -63,11 +63,15 @@ include_directories (${hexapic_BINARY_DIR})
 find_package (Boost COMPONENTS system filesystem regex program_options REQUIRED)
 find_package (OpenCV COMPONENTS core highgui imgproc REQUIRED)
 find_package (Eigen3 REQUIRED)
+find_package (Qt4 COMPONENTS QtCore QtGui REQUIRED)
 
 include_directories (
 	${Boost_INCLUDE_DIRS}
 	${OpenCV_INCLUDE_DIR}
   ${EIGEN3_INCLUDE_DIR}
+  ${QT_INCLUDE_DIR}
+  ${QT_QTCORE_INCLUDE_DIR}
+  ${QT_QTGUI_INCLUDE_DIR}
 )
 
 
@@ -79,6 +83,8 @@ add_executable (${CMAKE_PROJECT_NAME} ${hexapic_SOURCE})
 target_link_libraries (${CMAKE_PROJECT_NAME}
 	${Boost_LIBRARIES}
 	${OpenCV_LIBS}
+  ${QT_QTCORE_LIBRARY}
+  ${QT_QTGUI_LIBRARY}
 )
 
 #-------------------------------------------------------------------------------

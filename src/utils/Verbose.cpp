@@ -50,6 +50,11 @@ Verbose *Verbose::Instance()
   return sInstance;
 }
 
+void Verbose::SetVerbosity(Level inLevel)
+{
+  sMinLevel = inLevel;
+}
+
 Verbose &Verbose::Print(rcString inMsg, Level inLevel)
 {
   if (inLevel < sMinLevel)
