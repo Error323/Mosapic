@@ -1,15 +1,10 @@
-project (hexapic)
+project (hexapic CXX C)
 cmake_minimum_required (VERSION 2.8)
 
 
 #-------------------------------------------------------------------------------
 # General Settings
 #-------------------------------------------------------------------------------
-set (CMAKE_COLOR_MAKEFILE ON)
-set (CMAKE_C_FLAGS "-Wall -Wextra")
-set (CMAKE_C_FLAGS_DEBUG "-O0 -g")
-set (CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG")
-set (CMAKE_C_FLAGS_RELWITHDEBINFO "-O2 -g")
 set (CMAKE_CXX_FLAGS "-Wall -Wextra")
 set (CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
 set (CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
@@ -30,7 +25,7 @@ endif (ENABLE_OPENMP)
 
 if (ENABLE_PROFILING)
   set (CMAKE_BUILD_TYPE "Release")
-  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -pg")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -pg -fno-omit-frame-pointer -fno-inline-functions -fno-optimize-sibling-calls")
 endif (ENABLE_PROFILING)
 
 
@@ -96,10 +91,6 @@ message (STATUS "   C++ Compiler:               ${CMAKE_CXX_COMPILER}")
 message (STATUS "   C++ flags (Release):        ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE}")
 message (STATUS "   C++ flags (Debug):          ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_DEBUG}")
 message (STATUS "   C++ flags (RelWithDebInfo): ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
-message (STATUS "   C Compiler:                 ${CMAKE_C_COMPILER} ${CMAKE_C_COMPILER_ARG1}")
-message (STATUS "   C flags (Release):          ${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_RELEASE}")
-message (STATUS "   C flags (Debug):            ${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_DEBUG}")
-message (STATUS "   C flags (RelWithDebInfo):   ${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_RELWITHDEBINFO}")
 message (STATUS "")
 message (STATUS " CMakeflags (${CMAKE_PROJECT_NAME}):")
 message (STATUS "   CMAKE_BUILD_TYPE            ${CMAKE_BUILD_TYPE}")
