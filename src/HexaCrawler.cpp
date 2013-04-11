@@ -175,8 +175,8 @@ void HexaCrawler::Process(const QFileInfo &info)
     return;
   }
 
-  GammaCorrect(image, 2.2f);
   Crop(image);
+  GammaCorrect(image, 2.2f);
   Resize(image);
   GammaCorrect(image, 1.0f/2.2f);
 
