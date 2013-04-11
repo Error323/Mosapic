@@ -6,18 +6,21 @@
 
 #define CLAMP(v, a, b) std::min(std::max(v, a), b)
 #define ROUND_CLAMP(v, a, b) roundf(CLAMP(v, a, b))
-#define LANCZOS_SPP (4000)
-#define LANCZOS_WIDTH (3)
-#define KERNEL_SIZE (LANCZOS_WIDTH * 2)
-#define LANCZOS_SAMPLES (LANCZOS_SPP * (LANCZOS_WIDTH + 1))
+#define PIXEL(p) ROUND_CLAMP(p, 0.0f, 255.0f)
+#define LANCZOS_WIDTH (4.0f)
 
-float sinc(const float x)
+float sinc(float x)
 {
-  float y = x * M_PI;
-  if (fabs(x) < 1.0f / LANCZOS_SPP)
+  x *= M_PI;
+  return sinf(x) / x;
+}
+
+float lanczos(const float x, const float a)
+{
+  if (x == 0.0f)
     return 1.0f;
-  else
-    return sinf(y) / y;
+
+  return sinc(x) * sinc(x/a);
 }
 
 HexaCrawler::HexaCrawler():
@@ -26,29 +29,13 @@ HexaCrawler::HexaCrawler():
   mFailedCount(0),
   mClashCount(0)
 {
-  float a = float(LANCZOS_WIDTH);
-  float x = 0.0f;
-  float dx = a / float(LANCZOS_SAMPLES - 1);
-
-  mXKernel.resize(KERNEL_SIZE);
-  mYKernel.resize(KERNEL_SIZE);
-  mFullKernel.resize(KERNEL_SIZE, KERNEL_SIZE);
-  mWindowRed.resize(KERNEL_SIZE, KERNEL_SIZE);
-  mWindowGreen.resize(KERNEL_SIZE, KERNEL_SIZE);
-  mWindowBlue.resize(KERNEL_SIZE, KERNEL_SIZE);
-  mKernel.resize(LANCZOS_SAMPLES);
-  for (int i = 0; i < LANCZOS_SAMPLES; i++)
-  {
-    mKernel[i] = (fabs(x) < a) ? (sinc(x) * sinc(x / a)) : 0.0f;
-    x += dx;
-  }
 }
 
-void HexaCrawler::Crawl(const QDir &input, const QDir &output, const int tileSize)
+void HexaCrawler::Crawl(const QDir &input, const QDir &output, const int size)
 {
   mDstDir = output;
 
-  mTileSize = tileSize;
+  mTileSize = size;
   mImgCount = 0;
   mExistCount = 0;
   mFailedCount = 0;
@@ -90,81 +77,6 @@ void HexaCrawler::Crop(QImage &image)
   image = image.copy(x, y, min, min);
 }
 
-QRgb HexaCrawler::InterpolateLanczos(const QImage &image, const int sx, const int sy, const float xfrac, const float yfrac)
-{
-  float kx_sum = 0.0f;
-  float ky_sum = 0.0f;
-  int x_shift = int(xfrac * LANCZOS_SPP + 0.5f);
-  int y_shift = int(yfrac * LANCZOS_SPP + 0.5f);
-  float r, g, b;
-
-  const int from = KERNEL_SIZE/2;
-  const int to = -KERNEL_SIZE/2+1;
-  for (int i = from; i >= to; i--)
-  {
-    int pos = i * LANCZOS_SPP;
-    kx_sum += mXKernel(-to + i) = mKernel[abs(x_shift - pos)];
-    ky_sum += mYKernel(-to + i) = mKernel[abs(y_shift - pos)];
-  }
-
-  mXKernel.array() /= kx_sum;
-  mYKernel.array() /= ky_sum;
-
-  for (int i = 0; i < KERNEL_SIZE; i++)
-  {
-    int y = CLAMP(i + sy + to, 0, image.height()-1);
-    for (int j = 0; j < KERNEL_SIZE; j++)
-    {
-      int x = CLAMP(j + sx + to, 0, image.width()-1);
-      mWindowRed(i,j) = qRed(image.pixel(x, y));
-      mWindowGreen(i,j) = qGreen(image.pixel(x, y));
-      mWindowBlue(i,j) = qBlue(image.pixel(x, y));
-    }
-  }
-
-  mFullKernel = mYKernel * mXKernel.transpose();
-  r = (mFullKernel.array() * mWindowRed.array()).sum();
-  g = (mFullKernel.array() * mWindowGreen.array()).sum();
-  b = (mFullKernel.array() * mWindowBlue.array()).sum();
-
-  r = ROUND_CLAMP(r, 0.0f, 255.0f);
-  g = ROUND_CLAMP(g, 0.0f, 255.0f);
-  b = ROUND_CLAMP(b, 0.0f, 255.0f);
-  return qRgb(r, g, b);
-}
-
-void HexaCrawler::Resize(QImage &image)
-{
-  ASSERT(image.width() == image.height());
-  if (mTileSize == image.width())
-    return;
-
-  QImage target(mTileSize, mTileSize, QImage::Format_RGB32);
-  image = image.scaled(mTileSize*1.3, mTileSize*1.3,
-    Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
-  float ratio = image.width() / float(mTileSize);
-
-  QRgb p;
-  for (int ty = 0; ty < mTileSize; ty++)
-  {
-    float yfrac = ty * ratio;
-    int sy = int(yfrac);
-    yfrac -= sy;
-
-    for (int tx = 0; tx < mTileSize; tx++)
-    {
-      float xfrac = tx * ratio;
-      int sx = int(xfrac);
-      xfrac -= sx;
-
-      p = InterpolateLanczos(image, sx, sy, xfrac, yfrac);
-      target.setPixel(tx, ty, p);
-    }
-  }
-
-  image = target;
-}
-
 bool HexaCrawler::IsEqual(const QImage &a, const QImage &b)
 {
   if (a.width() != b.width() || a.height() != b.height())
@@ -181,6 +93,74 @@ void HexaCrawler::GammaCorrect(QImage &image, const float gamma)
 {
   for (int i = 0; i < image.numBytes(); i++)
     image.bits()[i] = roundf(std::pow(image.bits()[i] / 255.0f, gamma) * 255.0f);
+}
+
+void HexaCrawler::Resize(QImage &image)
+{
+  ASSERT(image.width() == image.height());
+  if (mTileSize == image.width())
+    return;
+
+  QImage target(mTileSize, mTileSize, QImage::Format_RGB32);
+  float factor = mTileSize / float(image.width());
+  float scale = float(image.width()) / mTileSize;
+  float support = scale * LANCZOS_WIDTH;
+  float phase, density;
+
+  float r,g,b;
+  std::vector<float> kernel_x(int(2.0f*support+3.0f));
+  std::vector<float> kernel_y(int(2.0f*support+3.0f));
+  for (int ty = 0; ty < mTileSize; ty++)
+  {
+    float center_y = (ty + 0.5f) / factor;
+    int start_y = std::max(int(center_y-support+0.5f), 0);
+    int stop_y = std::min(int(center_y+support+0.5f), image.height());
+    int n_y = stop_y-start_y;
+    density = 0.0f;
+    for (int i = 0; i < n_y; i++)
+    {
+      phase = float(start_y + i) - center_y + 0.5f;
+      kernel_y[i] = lanczos(factor*phase, LANCZOS_WIDTH);
+      density += kernel_y[i];
+    }
+    for (int i = 0; i < n_y; i++)
+      kernel_y[i] /= density;
+
+    for (int tx = 0; tx < mTileSize; tx++)
+    {
+      float center_x = (tx + 0.5f) / factor;
+      int start_x = std::max(int(center_x-support+0.5f), 0);
+      int stop_x = std::min(int(center_x+support+0.5f), image.width());
+      int n_x = stop_x-start_x;
+      density = 0.0f;
+      for (int i = 0; i < n_x; i++)
+      {
+        phase = float(start_x + i) - center_x + 0.5f;
+        kernel_x[i] = lanczos(factor*phase, LANCZOS_WIDTH);
+        density += kernel_x[i];
+      }
+      for (int i = 0; i < n_x; i++)
+        kernel_x[i] /= density;
+
+      r = g = b = 0.0f;
+      QRgb p;
+      float k_xy;
+      for (int i = 0; i < n_y; i++)
+      {
+        for (int j = 0; j < n_x; j++)
+        {
+          p = image.pixel(start_x+j, start_y+i);
+          k_xy = kernel_x[j] * kernel_y[i];
+          r += k_xy * qRed(p);
+          g += k_xy * qGreen(p);
+          b += k_xy * qBlue(p);
+        }
+      }
+      target.setPixel(tx, ty, qRgb(PIXEL(r), PIXEL(g), PIXEL(b)));
+    }
+  }
+
+  image = target;
 }
 
 void HexaCrawler::Process(const QFileInfo &info)
@@ -215,7 +195,8 @@ void HexaCrawler::Process(const QFileInfo &info)
     else
     {
       Warning("[clash]");
-      file.setFile(mDstDir.absolutePath() + "/" + info.baseName() + "-" + QString::number(clash_count) + ".tiff");
+      file.setFile(mDstDir.absolutePath() + "/" + info.baseName() + "-" +
+                   QString::number(clash_count) + ".tiff");
       clash_count++;
       mClashCount++;
     }
