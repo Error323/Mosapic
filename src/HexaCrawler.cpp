@@ -43,8 +43,14 @@ void HexaCrawler::Crawl(const QDir &input, const QDir &output, const int size, c
   mGamma = gamma;
   mFastResizing = fast;
 
-  DebugLine("Fast resizing: " << (fast ? "true" : "false"));
-  DebugLine("Gamma value:   " << gamma);
+  if (fast)
+    DebugLine("Using linear interpolation as resize algorithm");
+  else
+  {
+    DebugLine("Using lanczos interpolation as resize algorithm");
+    DebugLine("Lanczos side lobes    : " << LANCZOS_WIDTH);
+  }
+  DebugLine("Gamma correction value: " << gamma);
 
   Crawl(input);
   NoticeLine("");

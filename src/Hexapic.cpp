@@ -18,7 +18,7 @@ void PrintVersionAndExit(const int code)
 void PrintHelpAndExit(const int code)
 {
   printf("Usage: hexapic [-i DIR1 -o DIR2 -t N [-g GAMMA] [-v] [-f]]\n");
-  printf("               [-i IMG -d DIR -w WIDTH -r RADIUS -c COLOR_RATIO [-v]]\n\n");
+  printf("               [-i IMG -d DIR -p DIMS -w WIDTH -r RADIUS -c COLOR_RATIO [-v]]\n\n");
   printf("This program can do two things, create a database\n");
   printf("of images or create a hexagonal mosaic.\n");
   printf("Examples: hexapic -i images/ -o database/ -t 100 -v\n");
@@ -42,6 +42,7 @@ void PrintHelpAndExit(const int code)
   printf(" -w\twidth WIDTH of the output image in hexagons, WIDTH > 0\n");
   printf(" -r\tradius RADIUS in hexagons between equal images, RADIUS >= 0\n");
   printf(" -c\tcolor balancing ratio COLOR_RATIO in [0, 1]\n");
+  printf(" -p\tpca dimensions DIMS in {1,...,100}\n");
   printf(" -v\tenable verbosity information\n");
   exit(code);
 }
@@ -55,6 +56,7 @@ int main(int argc, char *argv[])
   int tile_size         = 0;
   int width_in_hexagons = 0;
   int min_radius        = 0;
+  int pca_dimensions    = 0;
   float cb_ratio        = 0.0f;
   float gamma           = 1.0f;
   bool fast             = false;
@@ -73,7 +75,7 @@ int main(int argc, char *argv[])
     }
   }
   else
-  if (argc >= 7 && argc <= 9)
+  if (argc >= 7 && argc <= 11)
   {
     while ((c = getopt(argc, argv, "i:o:t:g:vf")) != -1)
     {
@@ -107,9 +109,9 @@ int main(int argc, char *argv[])
     hc.Crawl(input, output, tile_size, fast, gamma);
   }
   else
-  if (argc >= 11 && argc <= 12)
+  if (argc >= 12 && argc <= 14)
   {
-    while ((c = getopt(argc, argv, "i:d:w:r:c:v")) != -1)
+    while ((c = getopt(argc, argv, "i:d:w:r:c:p:v")) != -1)
     {
       switch(c)
       {
@@ -119,6 +121,7 @@ int main(int argc, char *argv[])
         case 'r': min_radius = atoi(optarg); break;
         case 'c': cb_ratio = atof(optarg); break;
         case 'v': Verbose::SetVerbosity(Verbose::DBG); break;
+        case 'p': pca_dimensions = atoi(optarg); break;
         case '?': default: PrintHelpAndExit(EXIT_FAILURE);
       }
     }
@@ -139,6 +142,9 @@ int main(int argc, char *argv[])
 
     if (width_in_hexagons <= 0)
       FatalLine("Error: Width should be > 0");
+
+    if (pca_dimensions < 1 || pca_dimensions > 100)
+      FatalLine("Error: PCA dimensions should be between 1 and 100");
 
     //HexaMosaic hm(input_image, database_dir, width_in_hexagons, min_radius, cb_ratio);
     //hm.Create();
