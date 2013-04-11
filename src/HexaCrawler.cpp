@@ -31,7 +31,7 @@ HexaCrawler::HexaCrawler():
 {
 }
 
-void HexaCrawler::Crawl(const QDir &input, const QDir &output, const int size)
+void HexaCrawler::Crawl(const QDir &input, const QDir &output, const int size, const bool fast, const float gamma)
 {
   mDstDir = output;
 
@@ -40,6 +40,11 @@ void HexaCrawler::Crawl(const QDir &input, const QDir &output, const int size)
   mExistCount = 0;
   mFailedCount = 0;
   mClashCount = 0;
+  mGamma = gamma;
+  mFastResizing = fast;
+
+  DebugLine("Fast resizing: " << (fast ? "true" : "false"));
+  DebugLine("Gamma value:   " << gamma);
 
   Crawl(input);
   NoticeLine("");
@@ -176,9 +181,16 @@ void HexaCrawler::Process(const QFileInfo &info)
   }
 
   Crop(image);
-  GammaCorrect(image, 2.2f);
-  Resize(image);
-  GammaCorrect(image, 1.0f/2.2f);
+  if (mGamma != 1.0f)
+    GammaCorrect(image, mGamma);
+
+  if (mFastResizing)
+    image = image.scaled(mTileSize, mTileSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+  else
+    Resize(image);
+
+  if (mGamma != 1.0f)
+    GammaCorrect(image, 1.0f/mGamma);
 
   QFileInfo file(mDstDir.absolutePath() + "/" + info.baseName() + ".tiff");
 

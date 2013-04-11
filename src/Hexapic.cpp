@@ -17,7 +17,7 @@ void PrintVersionAndExit(const int code)
 
 void PrintHelpAndExit(const int code)
 {
-  printf("Usage: hexapic [-i DIR1 -o DIR2 -t N [-v]]\n");
+  printf("Usage: hexapic [-i DIR1 -o DIR2 -t N [-g GAMMA] [-v] [-f]]\n");
   printf("               [-i IMG -d DIR -w WIDTH -r RADIUS -c COLOR_RATIO [-v]]\n\n");
   printf("This program can do two things, create a database\n");
   printf("of images or create a hexagonal mosaic.\n");
@@ -32,6 +32,8 @@ void PrintHelpAndExit(const int code)
   printf(" -i\tinput directory DIR1 to crawl for images\n");
   printf(" -o\toutput directory DIR2 to store database\n");
   printf(" -t\ttile size N of database images, N > 0\n");
+  printf(" -g\tapply gamma correction GAMMA\n");
+  printf(" -f\tuse fast resizing algorithm\n");
   printf(" -v\tenable verbosity information\n\n");
 
   printf("Mosaic options:\n");
@@ -54,6 +56,8 @@ int main(int argc, char *argv[])
   int width_in_hexagons = 0;
   int min_radius        = 0;
   float cb_ratio        = 0.0f;
+  float gamma           = 1.0f;
+  bool fast             = false;
 
   int c;
   if (argc == 2)
@@ -69,9 +73,9 @@ int main(int argc, char *argv[])
     }
   }
   else
-  if (argc == 7 || argc == 8)
+  if (argc >= 7 && argc <= 9)
   {
-    while ((c = getopt(argc, argv, "i:o:t:v")) != -1)
+    while ((c = getopt(argc, argv, "i:o:t:g:vf")) != -1)
     {
       switch(c)
       {
@@ -79,6 +83,8 @@ int main(int argc, char *argv[])
         case 'o': output_dir = optarg; break;
         case 't': tile_size = atoi(optarg); break;
         case 'v': Verbose::SetVerbosity(Verbose::DBG); break;
+        case 'f': fast = true; break;
+        case 'g': gamma = atof(optarg); break;
         case '?': default: PrintHelpAndExit(EXIT_FAILURE);
       }
     }
@@ -98,10 +104,10 @@ int main(int argc, char *argv[])
       FatalLine("Error: Tile size `" << tile_size << "' should be > 0");
 
     HexaCrawler hc;
-    hc.Crawl(input, output, tile_size);
+    hc.Crawl(input, output, tile_size, fast, gamma);
   }
   else
-  if (argc == 11 || argc == 12)
+  if (argc >= 11 && argc <= 12)
   {
     while ((c = getopt(argc, argv, "i:d:w:r:c:v")) != -1)
     {

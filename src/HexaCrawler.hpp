@@ -10,7 +10,7 @@ public:
   HexaCrawler();
   ~HexaCrawler() {}
 
-  void Crawl(const QDir &input, const QDir &output, const int size);
+  void Crawl(const QDir &input, const QDir &output, const int size, const bool fast=true, const float gamma=1.0f);
 
 private:
   int mImgCount;
@@ -18,6 +18,8 @@ private:
   int mFailedCount;
   int mClashCount;
   int mTileSize;
+  float mGamma;
+  bool mFastResizing;
 
   QDir mDstDir;
 
