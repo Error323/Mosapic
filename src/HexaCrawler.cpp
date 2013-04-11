@@ -90,6 +90,9 @@ void HexaCrawler::Crop(QImage &image)
 
 bool HexaCrawler::IsEqual(const QImage &a, const QImage &b)
 {
+  if (a.isNull() || b.isNull())
+    return false;
+
   if (a.width() != b.width() || a.height() != b.height())
     return false;
 
