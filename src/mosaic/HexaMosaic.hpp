@@ -1,6 +1,7 @@
 #ifndef HEXAMOSAIC_HDR
 #define HEXAMOSAIC_HDR
 
+/*
 #include <string>
 #include <boost/filesystem.hpp>
 #include <boost/regex.hpp>
@@ -80,5 +81,6 @@ private:
   vInt mIndices;
   vString mImages;
 };
+*/
 
 #endif // HEXAMOSAIC_HDR

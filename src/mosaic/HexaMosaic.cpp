@@ -4,6 +4,7 @@
 #include "../utils/Debugger.hpp"
 #include "../utils/Verbose.hpp"
 
+/*
 #include <cmath>
 #include <cstdlib>
 #include <fstream>
@@ -443,3 +444,4 @@ float HexaMosaic::GetDistance(const cv::Mat &inSrcRow, const cv::Mat &inDataRow)
   cv::pow(tmp, 2.0, tmp);
   return sqrtf(cv::sum(tmp)[0]);
 }
+*/

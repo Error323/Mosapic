@@ -2,7 +2,6 @@
 #define PCA_H
 
 #include <Eigen/Dense>
-#include <opencv2/opencv.hpp>
 
 using namespace Eigen;
 
@@ -14,30 +13,21 @@ public:
 
   /// @brief Add a new data row
   void AddRow(const RowVectorXf &row);
-  void AddRow(const cv::Mat &row);
 
   /// @brief Compute eigenvectors, only when data matrix is filled
   void Solve(const int dimensions);
 
   /// @brief Project: Proj = (Data - Mean) * Eigen^T
   void Project(const MatrixXf &data, MatrixXf &projected);
-  void Project(const cv::Mat &data, cv::Mat &projected);
 
   /// @brief BackProject: Reduced = Proj * Eigen - Mean
   void BackProject(const MatrixXf &projected, MatrixXf &reduced);
-  void BackProject(const cv::Mat &projected, cv::Mat &reduced);
 
   /// @brief Return eigenvector i
   void GetEigenVector(const int i, RowVectorXf &eigenvector);
-  void GetEigenVector(const int i, cv::Mat &eigenvector);
 
 
 private:
-  void CvMat2EigRow(const cv::Mat &in, RowVectorXf &out);
-  void CvMat2EigMat(const cv::Mat &in, MatrixXf &out);
-  void EigMat2CvMat(const MatrixXf &in, cv::Mat &out);
-  void EigRow2CvMat(const RowVectorXf &in, cv::Mat &out);
-
   /// @brief Compute the covariance matrix C = (D-1)^-1 * X*X^T
   void CovarianceMatrix(const MatrixXf &data, MatrixXf &cov);
 

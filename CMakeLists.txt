@@ -55,14 +55,11 @@ include_directories (${hexapic_BINARY_DIR})
 #-------------------------------------------------------------------------------
 # Find 3rd party libraries and include their headers
 #-------------------------------------------------------------------------------
-find_package (Boost COMPONENTS system filesystem regex program_options REQUIRED)
-find_package (OpenCV COMPONENTS core highgui imgproc REQUIRED)
 find_package (Eigen3 REQUIRED)
 find_package (Qt4 COMPONENTS QtCore QtGui REQUIRED)
+find_package (CUDA)
 
 include_directories (
-	${Boost_INCLUDE_DIRS}
-	${OpenCV_INCLUDE_DIR}
   ${EIGEN3_INCLUDE_DIR}
   ${QT_INCLUDE_DIR}
   ${QT_QTCORE_INCLUDE_DIR}
@@ -73,7 +70,12 @@ include_directories (
 #-------------------------------------------------------------------------------
 # Define executable and link libraries
 #-------------------------------------------------------------------------------
-add_executable (hexacrawler ${hexacrawler_SOURCE})
+if (CUDA_FOUND)
+  cuda_add_executable (hexacrawler ${hexacrawler_SOURCE})
+else (CUDA_FOUND)
+  add_executable (hexacrawler ${hexacrawler_SOURCE})
+endif (CUDA_FOUND)
+
 target_link_libraries (hexacrawler
   ${QT_QTCORE_LIBRARY}
   ${QT_QTGUI_LIBRARY}
@@ -81,8 +83,6 @@ target_link_libraries (hexacrawler
 
 add_executable (hexamosaic ${hexamosaic_SOURCE})
 target_link_libraries (hexamosaic
-  ${Boost_LIBRARIES}
-  ${OpenCV_LIBS}
   ${QT_QTCORE_LIBRARY}
   ${QT_QTGUI_LIBRARY}
 )
