@@ -2,11 +2,19 @@
 # Source listing
 #-------------------------------------------------------------------------------
 
-SET(hexapic_SOURCE
-	src/Hexapic.cpp
-	src/HexaMosaic.cpp
-	src/HexaCrawler.cpp
-  src/pca/PCA.cpp
+SET(hexacrawler_SOURCE
+	src/crawler/Main.cpp
+	src/crawler/HexaCrawler.cpp
+  src/utils/Verbose.cpp
+  src/utils/Timer.cpp
+  src/utils/Types.hpp
+  src/utils/Debugger.hpp
+)
+
+SET(hexamosaic_SOURCE
+	src/mosaic/Main.cpp
+	src/mosaic/HexaMosaic.cpp
+  src/utils/pca/PCA.cpp
   src/utils/Verbose.cpp
   src/utils/Timer.cpp
   src/utils/Types.hpp

@@ -1,8 +1,9 @@
 #include "HexaCrawler.hpp"
-#include "HexaMosaic.hpp"
 
-#include "utils/Debugger.hpp"
-#include "utils/Verbose.hpp"
+#include "../utils/Debugger.hpp"
+#include "../utils/Verbose.hpp"
+
+#include <math.h>
 
 #define CLAMP(v, a, b) std::min(std::max(v, a), b)
 #define ROUND_CLAMP(v, a, b) roundf(CLAMP(v, a, b))
@@ -106,7 +107,7 @@ bool HexaCrawler::IsEqual(const QImage &a, const QImage &b)
 void HexaCrawler::GammaCorrect(QImage &image, const float gamma)
 {
   for (int i = 0; i < image.numBytes(); i++)
-    image.bits()[i] = roundf(std::pow(image.bits()[i] / 255.0f, gamma) * 255.0f);
+    image.bits()[i] = roundf(powf(image.bits()[i] / 255.0f, gamma) * 255.0f);
 }
 
 void HexaCrawler::Resize(QImage &image)

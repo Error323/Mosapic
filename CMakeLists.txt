@@ -73,11 +73,16 @@ include_directories (
 #-------------------------------------------------------------------------------
 # Define executable and link libraries
 #-------------------------------------------------------------------------------
-add_executable (${CMAKE_PROJECT_NAME} ${hexapic_SOURCE})
+add_executable (hexacrawler ${hexacrawler_SOURCE})
+target_link_libraries (hexacrawler
+  ${QT_QTCORE_LIBRARY}
+  ${QT_QTGUI_LIBRARY}
+)
 
-target_link_libraries (${CMAKE_PROJECT_NAME}
-	${Boost_LIBRARIES}
-	${OpenCV_LIBS}
+add_executable (hexamosaic ${hexamosaic_SOURCE})
+target_link_libraries (hexamosaic
+  ${Boost_LIBRARIES}
+  ${OpenCV_LIBS}
   ${QT_QTCORE_LIBRARY}
   ${QT_QTGUI_LIBRARY}
 )

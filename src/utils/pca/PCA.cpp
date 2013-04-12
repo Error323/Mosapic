@@ -1,7 +1,7 @@
 #include "PCA.hpp"
 
-#include "../utils/Debugger.hpp"
-#include "../utils/Verbose.hpp"
+#include "../Debugger.hpp"
+#include "../Verbose.hpp"
 
 PCA::PCA(const int rows, const int cols):
   mRows(rows),

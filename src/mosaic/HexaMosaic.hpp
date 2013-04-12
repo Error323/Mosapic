@@ -6,9 +6,7 @@
 #include <boost/regex.hpp>
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
-#include "utils/Types.hpp"
-
-DECLARE_CLASS(HexaMosaic)
+#include "../utils/Types.hpp"
 
 class HexaMosaic
 {

@@ -1,8 +1,8 @@
 #include "HexaMosaic.hpp"
 
-#include "pca/PCA.hpp"
-#include "utils/Debugger.hpp"
-#include "utils/Verbose.hpp"
+#include "../utils/pca/PCA.hpp"
+#include "../utils/Debugger.hpp"
+#include "../utils/Verbose.hpp"
 
 #include <cmath>
 #include <cstdlib>
