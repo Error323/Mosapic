@@ -2,6 +2,7 @@
 
 #include "../utils/Debugger.hpp"
 #include "../utils/Verbose.hpp"
+#include "../utils/cuda/init.h"
 
 #include <math.h>
 
@@ -30,6 +31,7 @@ HexaCrawler::HexaCrawler():
   mFailedCount(0),
   mClashCount(0)
 {
+  initCuda();
 }
 
 void HexaCrawler::Crawl(const QDir &input, const QDir &output, const int size, const bool fast, const float gamma)

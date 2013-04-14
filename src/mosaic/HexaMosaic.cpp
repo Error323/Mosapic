@@ -4,6 +4,131 @@
 #include "../utils/Debugger.hpp"
 #include "../utils/Verbose.hpp"
 
+#include <algorithm>
+
+HexaMosaic::HexaMosaic(
+    const QImage &image,
+    const QDir &database,
+    const int width,
+    const int radius,
+    const int dimensions,
+    const float colorbalance):
+  mSourceImg(image),
+  mDatabaseDir(database),
+  mWidth(width),
+  mRadius(radius),
+  mDimensions(dimensions),
+  mColorBalance(colorbalance)
+{
+  Crawl(mDatabaseDir);
+  if (mDatabase.empty())
+    FatalLine("Error: Database is empty");
+
+  QImage img(mDatabase.front().absoluteFilePath());
+
+  if (img.isNull() || img.width() != img.height())
+    FatalLine("Error: Corrupt database");
+
+  mTileSize = img.width();
+
+  // Find mHeight such that the ratio is closest to original
+  float orig_ratio = mSourceImg.width() / float(mSourceImg.height());
+  mPixelWidth = mWidth * mTileSize;
+  mHeight = 1;
+  float prev_ratio = std::numeric_limits<float>::max();
+  while (true)
+  {
+    mPixelHeight = mHeight * mTileSize;
+    float cur_ratio = mPixelWidth / float(mPixelHeight);
+
+    if (fabs(orig_ratio - prev_ratio) < fabs(orig_ratio - cur_ratio))
+    {
+      mHeight--;
+      mPixelHeight = mHeight * mTileSize;
+      break;
+    }
+
+    prev_ratio = cur_ratio;
+    mHeight++;
+  }
+
+  for (int i = 0; i < mWidth; i++)
+  {
+    for (int j = 0; j < mHeight; j++)
+    {
+      mCoordinates.append(QPoint(i, j));
+      mIndices.append(mCoordinates.size());
+    }
+  }
+
+  srand(0);
+  std::random_shuffle(mIndices.begin(), mIndices.end());
+
+  DebugLine("Dabase size:        " << mDatabase.size());
+  DebugLine("Tile size:          " << mTileSize);
+  DebugLine("Input image size:   " << mSourceImg.width() << "x" << mSourceImg.height());
+  DebugLine("Input image ratio:  " << orig_ratio);
+  DebugLine("Input image bytes:  " << mSourceImg.numBytes());
+  DebugLine("Input image format: " << mSourceImg.format());
+  DebugLine("Output image size:  " << mPixelWidth << "x" << mPixelHeight);
+  DebugLine("Output image ratio: " << prev_ratio);
+  DebugLine("Output image tiles: " << mWidth << "x" << mHeight);
+}
+
+void HexaMosaic::Create()
+{
+  PCA pca(mCoordinates.size(), mTileSize*mTileSize*4);
+  float dx = mSourceImg.width() / float(mWidth);
+  float dy = mSourceImg.height() / float(mHeight);
+  for (int i = 0; i < mWidth; i++)
+  {
+    for (int j = 0; j < mHeight; j++)
+    {
+      QImage img = mSourceImg.copy(i*dx, j*dy, dx, dy).scaled(
+                     mTileSize, mTileSize,
+                     Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+      Map<Matrix<uchar, 1, Dynamic> > row(reinterpret_cast<uchar*>(img.bits()), img.byteCount());
+      pca.AddRow(row.cast<float>());
+    }
+  }
+
+  Notice("Performing pca...");
+  pca.Solve(mDimensions);
+#ifndef NDEBUG
+  // Construct eigenvector images for debugging
+  RowVectorXf eigenvector;
+  for (int i = 0; i < mDimensions; i++)
+  {
+    pca.GetEigenVector(i, eigenvector);
+    eigenvector.array() -= eigenvector.minCoeff();
+    eigenvector.array() /= eigenvector.maxCoeff();
+    eigenvector.array() *= 255.0f;
+    Matrix<uchar, 1, Dynamic> v = eigenvector.cast<uchar>();
+    QImage vec_img(v.data(), mTileSize, mTileSize, mSourceImg.format());
+    vec_img.save(QString("eigenvec-")+QString::number(i)+".jpg");
+  }
+
+#endif // DEBUG
+  NoticeLine("[done]");
+}
+
+void HexaMosaic::Crawl(const QDir &dir)
+{
+  QFileInfoList list = dir.entryInfoList();
+
+  for (int i = 0; i < list.size(); i++)
+  {
+    QFileInfo &info = list[i];
+    if (info.fileName() == "." || info.fileName() == "..")
+      continue;
+
+    if (info.isDir())
+      Crawl(info.absoluteFilePath());
+    else
+      mDatabase.append(info);
+  }
+}
+
 /*
 #include <cmath>
 #include <cstdlib>

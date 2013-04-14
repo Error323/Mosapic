@@ -99,8 +99,8 @@ int main(int argc, char *argv[])
     if (pca_dimensions < 1 || pca_dimensions > 100)
       FatalLine("Error: PCA dimensions should be between 1 and 100");
 
-    //HexaMosaic hm(input_image, database_dir, width_in_hexagons, min_radius, cb_ratio);
-    //hm.Create();
+    HexaMosaic hm(image, dir, width_in_hexagons, min_radius, pca_dimensions, cb_ratio);
+    hm.Create();
   }
   else PrintHelpAndExit(EXIT_FAILURE);
 

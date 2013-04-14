@@ -9,6 +9,8 @@ SET(hexacrawler_SOURCE
   src/utils/Timer.cpp
   src/utils/Types.hpp
   src/utils/Debugger.hpp
+  src/utils/cuda/init.cu
+  src/utils/cuda/init.h
 )
 
 SET(hexamosaic_SOURCE

@@ -1,30 +1,47 @@
 #ifndef HEXAMOSAIC_HDR
 #define HEXAMOSAIC_HDR
 
-/*
-#include <string>
-#include <boost/filesystem.hpp>
-#include <boost/regex.hpp>
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
-#include "../utils/Types.hpp"
+#include <QtCore>
+#include <QtGui>
+
+#include <Eigen/Dense>
+
+using namespace Eigen;
 
 class HexaMosaic
 {
 public:
   HexaMosaic(
-    rcString inSourceImage,
-    rcString inDatabase,
-    cInt inWidth,
-    cInt inHeight,
-    cInt inDimensions,
-    cInt inMinRadius,
-    cFloat inCBRatio
+    const QImage &image,
+    const QDir &database,
+    const int width,
+    const int radius,
+    const int dimensions,
+    const float colorbalance
   );
 
   void Create();
 
 private:
+  const QImage &mSourceImg;
+  const QDir &mDatabaseDir;
+  const int mWidth;
+  const int mRadius;
+  const int mDimensions;
+  const float mColorBalance;
+
+  int mHeight;
+  int mTileSize;
+  int mPixelWidth;
+  int mPixelHeight;
+
+  QVector<QFileInfo> mDatabase;
+  QVector<QPoint> mCoordinates;
+  QVector<int> mIndices;
+
+  void Crawl(const QDir &dir);
+
+  /*
   struct Match
   {
     Match(): id(-1), val(-1.0f) {}
@@ -80,7 +97,7 @@ private:
   std::vector<cv::Point2i> mHexCoords;
   vInt mIndices;
   vString mImages;
+  */
 };
-*/
 
 #endif // HEXAMOSAIC_HDR
