@@ -12,7 +12,7 @@ class HexaMosaic
 {
 public:
   HexaMosaic(
-    const QImage &image,
+    QImage &image,
     const QDir &database,
     const int width,
     const int radius,
@@ -23,7 +23,7 @@ public:
   void Create();
 
 private:
-  const QImage &mSourceImg;
+  QImage &mSourceImg;
   const QDir &mDatabaseDir;
   const int mWidth;
   const int mRadius;

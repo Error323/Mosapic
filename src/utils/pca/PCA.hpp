@@ -26,6 +26,9 @@ public:
   /// @brief Return eigenvector i
   void GetEigenVector(const int i, RowVectorXf &eigenvector);
 
+  /// @brief Return the projected data: Proj = (Data - Mean) * Eigen^T
+  void GetProjectedData(MatrixXf &data);
+
 
 private:
   /// @brief Compute the covariance matrix C = (D-1)^-1 * X*X^T

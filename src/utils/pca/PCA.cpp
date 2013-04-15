@@ -26,6 +26,15 @@ void PCA::AddRow(const RowVectorXf &row)
   mCurRow++;
 }
 
+void PCA::GetProjectedData(MatrixXf &projected)
+{
+  // NOTE: mean is already subtracted, this function is called after
+  //       Solve()
+  projected = mData * mEigen.transpose();
+  // Destroy data, we no longer need it
+  mData.resize(0, 0);
+}
+
 void PCA::Solve(const int dimensions)
 {
   mDimensions = dimensions;
@@ -60,7 +69,6 @@ void PCA::Solve(const int dimensions)
   }
 
   // Destroy data
-  mData.resize(0, 0);
   mE.resize(0, 0);
   mS.resize(0);
 }

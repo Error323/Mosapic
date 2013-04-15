@@ -6,8 +6,7 @@
 
 #include <algorithm>
 
-HexaMosaic::HexaMosaic(
-    const QImage &image,
+HexaMosaic::HexaMosaic(QImage &image,
     const QDir &database,
     const int width,
     const int radius,
@@ -77,25 +76,31 @@ HexaMosaic::HexaMosaic(
 
 void HexaMosaic::Create()
 {
+  /*****************************************************************************
+   * 1. Resize source image to output image. Convert source image into tiles,
+   *    put each tile as row in a matrix
+   ****************************************************************************/
+  mSourceImg = mSourceImg.scaled(mWidth*mTileSize, mHeight*mTileSize,
+                                 Qt::IgnoreAspectRatio,
+                                 Qt::SmoothTransformation);
   PCA pca(mCoordinates.size(), mTileSize*mTileSize*4);
-  float dx = mSourceImg.width() / float(mWidth);
-  float dy = mSourceImg.height() / float(mHeight);
   for (int i = 0; i < mWidth; i++)
   {
     for (int j = 0; j < mHeight; j++)
     {
-      QImage img = mSourceImg.copy(i*dx, j*dy, dx, dy).scaled(
-                     mTileSize, mTileSize,
-                     Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
-      Map<Matrix<uchar, 1, Dynamic> > row(reinterpret_cast<uchar*>(img.bits()), img.byteCount());
+      QImage img = mSourceImg.copy(i*mTileSize, j*mTileSize,
+                                   mTileSize, mTileSize);
+      Map<Matrix<uchar, 1, Dynamic> > row(img.bits(), img.byteCount());
       pca.AddRow(row.cast<float>());
     }
   }
 
+  /*****************************************************************************
+   * 2. Perform principal component analysis and visualize eigenvectors
+   ****************************************************************************/
   Notice("Performing pca...");
   pca.Solve(mDimensions);
 #ifndef NDEBUG
-  // Construct eigenvector images for debugging
   RowVectorXf eigenvector;
   for (int i = 0; i < mDimensions; i++)
   {
@@ -107,8 +112,44 @@ void HexaMosaic::Create()
     QImage vec_img(v.data(), mTileSize, mTileSize, mSourceImg.format());
     vec_img.save(QString("eigenvec-")+QString::number(i)+".jpg");
   }
+#endif // NDEBUG
+  NoticeLine("[done]");
 
-#endif // DEBUG
+  /*****************************************************************************
+   * 3. Project source image onto eigenvectors as our basis, reconstruct source
+   *    image with reduced data as visualization
+   ****************************************************************************/
+  Notice("Project source image...");
+  MatrixXf projected_src;
+  pca.GetProjectedData(projected_src);
+#ifndef NDEBUG
+  MatrixXf reduced_row;
+  for (int i = 0, idx = 0; i < mWidth; i++)
+  {
+    for (int j = 0; j < mHeight; j++, idx++)
+    {
+      pca.BackProject(projected_src.row(idx), reduced_row);
+      Matrix<uchar, Dynamic, Dynamic> data = reduced_row.cast<uchar>();
+      QImage img(data.data(), mTileSize, mTileSize, mSourceImg.format());
+      for (int x = 0; x < mTileSize; x++)
+        for (int y = 0; y < mTileSize; y++)
+          mSourceImg.setPixel(i*mTileSize+x, j*mTileSize+y, img.pixel(x,y));
+    }
+  }
+  mSourceImg.save(QString("reduced-")+QString::number(mDimensions)+".jpg");
+#endif
+  NoticeLine("[done]");
+
+  Notice("Project database...");
+  MatrixXf projected_db(mDatabase.size(), mDimensions);
+  MatrixXf projected_row;
+  for (int i = 0; i < mDatabase.size(); i++)
+  {
+    QImage db_img(mDatabase[i].absoluteFilePath());
+    Map<Matrix<uchar, 1, Dynamic> > row(db_img.bits(), db_img.byteCount());
+    pca.Project(row.cast<float>(), projected_row);
+    projected_db.row(i) = projected_row;
+  }
   NoticeLine("[done]");
 }
 
