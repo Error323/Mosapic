@@ -19,7 +19,7 @@ HexaMosaic::HexaMosaic(QImage &image,
   mDimensions(dimensions),
   mColorBalance(colorbalance)
 {
-  Crawl(mDatabaseDir);
+  LoadDatabase(mDatabaseDir);
   if (mDatabase.empty())
     FatalLine("Error: Database is empty");
 
@@ -34,29 +34,29 @@ HexaMosaic::HexaMosaic(QImage &image,
   float orig_ratio = mSourceImg.width() / float(mSourceImg.height());
   mPixelWidth = mWidth * mTileSize;
   mHeight = 1;
-  float prev_ratio = std::numeric_limits<float>::max();
+  float best_ratio = std::numeric_limits<float>::max();
   while (true)
   {
     mPixelHeight = mHeight * mTileSize;
     float cur_ratio = mPixelWidth / float(mPixelHeight);
 
-    if (fabs(orig_ratio - prev_ratio) < fabs(orig_ratio - cur_ratio))
+    if (fabs(orig_ratio - best_ratio) < fabs(orig_ratio - cur_ratio))
     {
       mHeight--;
       mPixelHeight = mHeight * mTileSize;
       break;
     }
 
-    prev_ratio = cur_ratio;
+    best_ratio = cur_ratio;
     mHeight++;
   }
 
-  for (int i = 0; i < mWidth; i++)
+  for (int x = 0; x < mWidth; x++)
   {
-    for (int j = 0; j < mHeight; j++)
+    for (int y = 0; y < mHeight; y++)
     {
       mIndices.append(mCoordinates.size());
-      mCoordinates.append(QPoint(i, j));
+      mCoordinates.append(QPoint(x*mTileSize, y*mTileSize));
     }
   }
 
@@ -69,7 +69,7 @@ HexaMosaic::HexaMosaic(QImage &image,
   DebugLine("Input image ratio:  " << orig_ratio);
   DebugLine("Input image bytes:  " << mSourceImg.numBytes());
   DebugLine("Output image size:  " << mPixelWidth << "x" << mPixelHeight);
-  DebugLine("Output image ratio: " << prev_ratio);
+  DebugLine("Output image ratio: " << best_ratio);
   DebugLine("Output image tiles: " << mWidth << "x" << mHeight);
 }
 
@@ -187,7 +187,7 @@ void HexaMosaic::Create()
     QImage best_img(mDatabase[best_id].absoluteFilePath());
     for (int x = 0; x < mTileSize; x++)
       for (int y = 0; y < mTileSize; y++)
-        mSourceImg.setPixel(p.x()*mTileSize+x, p.y()*mTileSize+y, best_img.pixel(x,y));
+        mSourceImg.setPixel(p.x()+x, p.y()+y, best_img.pixel(x,y));
   }
   NoticeLine("[done]");
 
@@ -200,7 +200,7 @@ void HexaMosaic::Create()
   file_name += ".tiff";
   mSourceImg.save(file_name);
   NoticeLine("[done]");
-  NoticeLine(qPrintable(file_name));
+  NoticeLine("\nImage stored as: " << qPrintable(file_name));
 }
 
 float HexaMosaic::Distance(const RowVectorXf &a, const RowVectorXf &b)
@@ -209,7 +209,7 @@ float HexaMosaic::Distance(const RowVectorXf &a, const RowVectorXf &b)
   return sqrtf((a.array()-b.array()).square().sum());
 }
 
-void HexaMosaic::Crawl(const QDir &dir)
+void HexaMosaic::LoadDatabase(const QDir &dir)
 {
   QFileInfoList list = dir.entryInfoList();
 
@@ -220,7 +220,7 @@ void HexaMosaic::Crawl(const QDir &dir)
       continue;
 
     if (info.isDir())
-      Crawl(info.absoluteFilePath());
+      LoadDatabase(info.absoluteFilePath());
     else
       mDatabase.append(info);
   }

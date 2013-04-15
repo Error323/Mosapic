@@ -49,7 +49,7 @@ private:
   QVector<QPoint> mCoordinates;
   QVector<int> mIndices;
 
-  void Crawl(const QDir &dir);
+  void LoadDatabase(const QDir &dir);
   float Distance(const RowVectorXf &a, const RowVectorXf &b);
 };
 
