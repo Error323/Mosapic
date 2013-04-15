@@ -56,7 +56,9 @@ void PCA::Solve(const int dimensions)
   ASSERT(mS.rows() == solver.eigenvalues().rows());
   ASSERT(mS.cols() == solver.eigenvalues().cols());
   mS = solver.eigenvalues();
-
+#ifndef NDEBUG
+  std::cerr << mS.reverse() << std::endl;
+#endif
   ASSERT(mE.rows() == solver.eigenvectors().rows());
   ASSERT(mE.cols() == solver.eigenvectors().cols());
   mE = solver.eigenvectors();
@@ -70,7 +72,7 @@ void PCA::Solve(const int dimensions)
 
   // Destroy data
   mE.resize(0, 0);
-  mS.resize(0);
+  mS = mS.tail(mDimensions).reverse();
 }
 
 void PCA::Project(const MatrixXf &data, MatrixXf &projected)
@@ -87,6 +89,12 @@ void PCA::BackProject(const MatrixXf &projected, MatrixXf &reduced)
   ASSERT(projected.cols() == mDimensions);
 
   reduced = (projected * mEigen).rowwise() + mMean;
+}
+
+float PCA::GetEigenValue(const int i)
+{
+  ASSERT(i >= 0 && i <= mDimensions);
+  return mS(i);
 }
 
 void PCA::GetEigenVector(const int i, RowVectorXf &eigenvector)

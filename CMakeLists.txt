@@ -7,7 +7,7 @@ cmake_minimum_required (VERSION 2.8)
 #-------------------------------------------------------------------------------
 set (CMAKE_CXX_FLAGS "-Wall -Wextra")
 set (CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
-set (CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG")
+set (CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -DQT_NO_DEBUG")
 set (CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g")
 
 set (CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/modules")
@@ -25,7 +25,7 @@ endif (ENABLE_OPENMP)
 
 if (ENABLE_PROFILING)
   set (CMAKE_BUILD_TYPE "Release")
-  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -pg -fno-omit-frame-pointer -fno-inline-functions -fno-inline-functions-called-once -fno-optimize-sibling-calls -fno-default-inline -fno-inline")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -pg -fno-omit-frame-pointer")
 endif (ENABLE_PROFILING)
 
 

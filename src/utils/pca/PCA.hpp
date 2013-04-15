@@ -26,8 +26,11 @@ public:
   /// @brief Return eigenvector i
   void GetEigenVector(const int i, RowVectorXf &eigenvector);
 
+  /// @brief Return eigenvalue i
+  float GetEigenValue(const int i);
+
   /// @brief Return the projected data: Proj = (Data - Mean) * Eigen^T
-  void GetProjectedData(MatrixXf &data);
+  void GetProjectedData(MatrixXf &projected);
 
 
 private:
