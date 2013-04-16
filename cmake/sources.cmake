@@ -11,6 +11,8 @@ SET(hexacrawler_SOURCE
   src/utils/Debugger.hpp
   src/utils/cuda/init.cu
   src/utils/cuda/init.h
+  src/utils/cuda/gammacorrect.h
+  src/utils/cuda/gammacorrect.cu
 )
 
 SET(hexamosaic_SOURCE

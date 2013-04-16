@@ -14,6 +14,7 @@ set (CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/modules")
 
 option (ENABLE_OPENMP "Enable/disable openmp (used by Eigen3)" OFF)
 option (ENABLE_PROFILING "Enable/disable profiling" OFF)
+option (ENABLE_CUDA "Enable/disable cuda" ON)
 
 if (NOT CMAKE_BUILD_TYPE)
   set (CMAKE_BUILD_TYPE "Release")
@@ -27,6 +28,11 @@ if (ENABLE_PROFILING)
   set (CMAKE_BUILD_TYPE "Release")
   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -pg -fno-omit-frame-pointer")
 endif (ENABLE_PROFILING)
+
+if (ENABLE_CUDA)
+  find_package (CUDA)
+  add_definitions(-DENABLE_CUDA)
+endif (ENABLE_CUDA)
 
 
 #-------------------------------------------------------------------------------
@@ -57,7 +63,6 @@ include_directories (${hexapic_BINARY_DIR})
 #-------------------------------------------------------------------------------
 find_package (Eigen3 REQUIRED)
 find_package (Qt4 COMPONENTS QtCore QtGui REQUIRED)
-find_package (CUDA)
 
 include_directories (
   ${EIGEN3_INCLUDE_DIR}
@@ -101,4 +106,5 @@ message (STATUS " CMakeflags (${CMAKE_PROJECT_NAME}):")
 message (STATUS "   CMAKE_BUILD_TYPE            ${CMAKE_BUILD_TYPE}")
 message (STATUS "   ENABLE_PROFILING            ${ENABLE_PROFILING}")
 message (STATUS "   ENABLE_OPENMP               ${ENABLE_OPENMP}")
+message (STATUS "   ENABLE_CUDA                 ${ENABLE_CUDA}")
 message (STATUS "")

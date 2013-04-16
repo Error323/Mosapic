@@ -2,14 +2,18 @@
 
 #include "../utils/Debugger.hpp"
 #include "../utils/Verbose.hpp"
+
+#ifdef ENABLE_CUDA
 #include "../utils/cuda/init.h"
+#include "../utils/cuda/gammacorrect.h"
+#endif
 
 #include <math.h>
 
 #define CLAMP(v, a, b) std::min(std::max(v, a), b)
 #define ROUND_CLAMP(v, a, b) roundf(CLAMP(v, a, b))
 #define PIXEL(p) ROUND_CLAMP(p, 0.0f, 255.0f)
-#define LANCZOS_WIDTH (4.0f)
+#define LANCZOS_WIDTH (2.0f)
 
 float sinc(float x)
 {
@@ -29,9 +33,12 @@ HexaCrawler::HexaCrawler():
   mImgCount(0),
   mExistCount(0),
   mFailedCount(0),
-  mClashCount(0)
+  mClashCount(0),
+  mHasCuda(false)
 {
-  initCuda();
+#ifdef ENABLE_CUDA
+  mHasCuda = gpu::initCuda();
+#endif
 }
 
 void HexaCrawler::Crawl(const QDir &input, const QDir &output, const int size, const bool fast, const float gamma)
@@ -51,7 +58,7 @@ void HexaCrawler::Crawl(const QDir &input, const QDir &output, const int size, c
   else
   {
     DebugLine("Using lanczos interpolation as resize algorithm");
-    DebugLine("Lanczos side lobes    : " << LANCZOS_WIDTH);
+    DebugLine("Lanczos side lobes:     " << LANCZOS_WIDTH);
   }
   DebugLine("Gamma correction value: " << gamma);
 
@@ -112,13 +119,15 @@ void HexaCrawler::GammaCorrect(QImage &image, const float gamma)
     image.bits()[i] = roundf(powf(image.bits()[i] / 255.0f, gamma) * 255.0f);
 }
 
-void HexaCrawler::Resize(QImage &image)
+void HexaCrawler::Resize(const QImage &image, QImage &resized)
 {
   ASSERT(image.width() == image.height());
   if (mTileSize == image.width())
+  {
+    resized = image;
     return;
+  }
 
-  QImage target(mTileSize, mTileSize, QImage::Format_RGB32);
   float factor = mTileSize / float(image.width());
   float scale = float(image.width()) / mTileSize;
   float support = scale * LANCZOS_WIDTH;
@@ -173,16 +182,15 @@ void HexaCrawler::Resize(QImage &image)
           b += k_xy * qBlue(p);
         }
       }
-      target.setPixel(tx, ty, qRgb(PIXEL(r), PIXEL(g), PIXEL(b)));
+      resized.setPixel(tx, ty, qRgb(PIXEL(r), PIXEL(g), PIXEL(b)));
     }
   }
-
-  image = target;
 }
 
 void HexaCrawler::Process(const QFileInfo &info)
 {
   QImage image(info.absoluteFilePath());
+
 
   Notice("Processing `" << qPrintable(info.fileName()) << "'...");
   if (image.isNull() || image.width() < mTileSize || image.height() < mTileSize)
@@ -193,16 +201,28 @@ void HexaCrawler::Process(const QFileInfo &info)
   }
 
   Crop(image);
-  if (mGamma != 1.0f)
-    GammaCorrect(image, mGamma);
-
-  if (mFastResizing)
-    image = image.scaled(mTileSize, mTileSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+  QImage resized(mTileSize, mTileSize, image.format());
+#ifdef ENABLE_CUDA
+  if (mHasCuda && !mFastResizing)
+  {
+    gpu::process(reinterpret_cast<uchar4*>(image.bits()), image.height(),
+                 reinterpret_cast<uchar4*>(resized.bits()), resized.height(),
+                 mGamma);
+  }
   else
-    Resize(image);
+#endif
+  {
+    if (mGamma != 1.0f)
+      GammaCorrect(image, mGamma);
 
-  if (mGamma != 1.0f)
-    GammaCorrect(image, 1.0f/mGamma);
+    if (mFastResizing)
+      resized = image.scaled(mTileSize, mTileSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    else
+      Resize(image, resized);
+
+    if (mGamma != 1.0f)
+      GammaCorrect(resized, 1.0f/mGamma);
+  }
 
   QFileInfo file(mDstDir.absolutePath() + "/" + info.baseName() + ".tiff");
 
@@ -210,7 +230,7 @@ void HexaCrawler::Process(const QFileInfo &info)
   while (file.exists())
   {
     QImage existing(file.absoluteFilePath());
-    if (IsEqual (existing, image))
+    if (IsEqual (existing, resized))
     {
       ErrorLine("[exists]");
       mExistCount++;
@@ -226,7 +246,7 @@ void HexaCrawler::Process(const QFileInfo &info)
     }
   }
 
-  image.save(file.absoluteFilePath());
+  resized.save(file.absoluteFilePath());
   mImgCount++;
   NoticeLine("[done]");
 }

@@ -20,13 +20,14 @@ private:
   int mTileSize;
   float mGamma;
   bool mFastResizing;
+  bool mHasCuda;
 
   QDir mDstDir;
 
   void Process(const QFileInfo &info);
   void Crawl(const QDir &dir);
   void Crop(QImage &image);
-  void Resize(QImage &image);
+  void Resize(const QImage &image, QImage &resized);
   void GammaCorrect(QImage &image, const float gamma);
   bool IsEqual(const QImage &a, const QImage &b);
 };
