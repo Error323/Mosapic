@@ -1,5 +1,6 @@
 #include "MosaCrawler.hpp"
 
+#include "Constants.hpp"
 #include "../utils/Debugger.hpp"
 #include "../utils/Verbose.hpp"
 
@@ -13,7 +14,6 @@
 #define CLAMP(v, a, b) std::min(std::max(v, a), b)
 #define ROUND_CLAMP(v, a, b) roundf(CLAMP(v, a, b))
 #define PIXEL(p) ROUND_CLAMP(p, 0.0f, 255.0f)
-#define LANCZOS_WIDTH (2.0f)
 
 float sinc(float x)
 {
@@ -218,6 +218,7 @@ void MosaCrawler::Process(const QFileInfo &info)
   if (!success)
 #endif
   {
+    Debug("[cpu]");
     if (mGamma != 1.0f)
       GammaCorrect(image, mGamma);
 
@@ -238,7 +239,7 @@ void MosaCrawler::Process(const QFileInfo &info)
     QImage existing(file.absoluteFilePath());
     if (IsEqual (existing, resized))
     {
-      ErrorLine("[exists]");
+      WarningLine("[exists]");
       mExistCount++;
       return;
     }

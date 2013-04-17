@@ -2,15 +2,14 @@
 #include "init.h"
 #include "../Verbose.hpp"
 #include "../Debugger.hpp"
+#include "../../crawler/Constants.hpp"
 
 #include <math.h>
 #include <math_constants.h>
 
 #define BLOCK_DIM_2D 16
-#define LANCZOS_WIDTH 2.0f
-#define MAX_SUPPORT 64
-#define MAX_KERNEL_SIZE (MAX_SUPPORT*int(LANCZOS_WIDTH)+3)
-#define SPACE (MAX_KERNEL_SIZE / BLOCK_DIM_2D + 1)
+#define MAX_SCALE 64.0f
+#define MAX_KERNEL_SIZE int(MAX_SCALE*LANCZOS_WIDTH*2.0f)
 
 namespace gpu
 {
@@ -149,21 +148,16 @@ bool process(uchar4 *src, const int srcSize,
   size_t src_mem = srcSize*srcSize*sizeof(uchar4);
   size_t dst_mem = dstSize*dstSize*sizeof(uchar4);
   if (src_mem+dst_mem > gpu::freeMemory())
-  {
-    WarningLine("Warning: Not enough memory on cuda device, proceeding on cpu");
     return false;
-  }
 
   float factor  = dstSize / float(srcSize);
   float scale   = 1.0f / factor;
   float support = scale * LANCZOS_WIDTH;
 
-  if (support > MAX_SUPPORT)
-  {
-    WarningLine("Warning: Scaling factor too big, proceeding on cpu");
+  if (scale > MAX_SCALE)
     return false;
-  }
 
+  Debug("[gpu]");
   dim3 blocks, threads;
   uchar4 *d_src, *d_dst;
   cudaSafeCall(cudaMalloc((void**)&d_src, src_mem));
