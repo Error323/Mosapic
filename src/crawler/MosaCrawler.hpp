@@ -1,14 +1,14 @@
-#ifndef HEXACRAWLER_HDR
-#define HEXACRAWLER_HDR
+#ifndef MOSACRAWLER_H
+#define MOSACRAWLER_H
 
 #include <QtCore>
 #include <QImage>
 
-class HexaCrawler
+class MosaCrawler
 {
 public:
-  HexaCrawler();
-  ~HexaCrawler() {}
+  MosaCrawler();
+  ~MosaCrawler() {}
 
   void Crawl(const QDir &input, const QDir &output, const int size, const bool fast=true, const float gamma=1.0f);
 
@@ -20,7 +20,7 @@ private:
   int mTileSize;
   float mGamma;
   bool mFastResizing;
-  bool mHasCuda;
+  bool mCudaIsInitialized;
 
   QDir mDstDir;
 
@@ -32,4 +32,4 @@ private:
   bool IsEqual(const QImage &a, const QImage &b);
 };
 
-#endif // HEXACRAWLER_HDR
+#endif // MOSACRAWLER_H

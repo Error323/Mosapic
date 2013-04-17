@@ -1,4 +1,4 @@
-#include "gammacorrect.h"
+#include "process.h"
 #include "init.h"
 #include "../Verbose.hpp"
 #include "../Debugger.hpp"
@@ -8,7 +8,9 @@
 
 #define BLOCK_DIM_2D 16
 #define LANCZOS_WIDTH 2.0f
-#define KERNEL_SIZE (30*int(LANCZOS_WIDTH)+3)
+#define MAX_SUPPORT 64
+#define MAX_KERNEL_SIZE (MAX_SUPPORT*int(LANCZOS_WIDTH)+3)
+#define SPACE (MAX_KERNEL_SIZE / BLOCK_DIM_2D + 1)
 
 namespace gpu
 {
@@ -97,8 +99,10 @@ __global__ void lanczos(uchar4 *src, uchar4 *dst, int nSrc, int nDst, float fact
   int stop_x  = min(int(center_x+support+0.5f), nSrc);
   int n_y = stop_y - start_y;
   int n_x = stop_x - start_x;
-  float kernel_x[KERNEL_SIZE];
-  float kernel_y[KERNEL_SIZE];
+
+  // compute kernels
+  float kernel_x[MAX_KERNEL_SIZE];
+  float kernel_y[MAX_KERNEL_SIZE];
 
   float density = 0.0f;
   for (int i = 0; i < n_y; i++)
@@ -118,6 +122,7 @@ __global__ void lanczos(uchar4 *src, uchar4 *dst, int nSrc, int nDst, float fact
   for (int i = 0; i < n_x; i++)
     kernel_x[i] /= density;
 
+  // apply kernels and store result in resized image
   float4 p = make_float4(0.0f, 0.0f, 0.0f, 0.0f);
   uchar4 rgba;
   float lanczos_xy;
@@ -137,7 +142,7 @@ __global__ void lanczos(uchar4 *src, uchar4 *dst, int nSrc, int nDst, float fact
 
 
 
-void process(uchar4 *src, const int srcSize,
+bool process(uchar4 *src, const int srcSize,
              uchar4 *dst, const int dstSize,
              const float g)
 {
@@ -145,8 +150,18 @@ void process(uchar4 *src, const int srcSize,
   size_t dst_mem = dstSize*dstSize*sizeof(uchar4);
   if (src_mem+dst_mem > gpu::freeMemory())
   {
-    WarningLine("Not enough memory on cuda device");
-    return;
+    WarningLine("Warning: Not enough memory on cuda device, proceeding on cpu");
+    return false;
+  }
+
+  float factor  = dstSize / float(srcSize);
+  float scale   = 1.0f / factor;
+  float support = scale * LANCZOS_WIDTH;
+
+  if (support > MAX_SUPPORT)
+  {
+    WarningLine("Warning: Scaling factor too big, proceeding on cpu");
+    return false;
   }
 
   dim3 blocks, threads;
@@ -159,9 +174,6 @@ void process(uchar4 *src, const int srcSize,
   threads = dim3(BLOCK_DIM_2D, BLOCK_DIM_2D);
   gamma<<<blocks, threads>>>(d_src, d_src, g, srcSize);
 
-  float factor  = dstSize / float(srcSize);
-  float scale   = 1.0f / factor;
-  float support = scale * LANCZOS_WIDTH;
   blocks  = dim3(iDivUp(dstSize, BLOCK_DIM_2D), iDivUp(dstSize, BLOCK_DIM_2D));
   threads = dim3(BLOCK_DIM_2D, BLOCK_DIM_2D);
   lanczos<<<blocks, threads>>>(d_src, d_dst, srcSize, dstSize, factor, scale, support);
@@ -173,5 +185,7 @@ void process(uchar4 *src, const int srcSize,
   cudaSafeCall(cudaMemcpy(dst, d_dst, dst_mem, cudaMemcpyDeviceToHost));
   cudaSafeCall(cudaFree(d_src));
   cudaSafeCall(cudaFree(d_dst));
+
+  return true;
 }
 }

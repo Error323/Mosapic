@@ -26,7 +26,7 @@ __global__ void lanczos(uchar4 *src,
                         float scale,
                         float support);
 
-void process(uchar4 *src,
+bool process(uchar4 *src,
              const int srcSize,
              uchar4 *dst,
              const int dstSize,

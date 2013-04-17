@@ -3,7 +3,7 @@
 
 #include "../utils/Verbose.hpp"
 #include "Version.hpp"
-#include "HexaMosaic.hpp"
+#include "Mosapic.hpp"
 
 #include <unistd.h>
 
@@ -18,10 +18,10 @@ void PrintVersionAndExit(const int code)
 
 void PrintHelpAndExit(const int code)
 {
-  printf("Usage: hexamosaic -i IMG -d DIR -p DIMS -w WIDTH [-c COLOR_RATIO] [-v]\n\n");
-  printf("Create a hexagonal mosaic from the input image using the database.\n");
-  printf("Examples: hexamosaic -i input.jpg -d database/ -w 20 -p 8\n");
-  printf("          hexamosaic -i input.jpg -d database/ -w 10 -c 0.8 -p 16 -v\n\n");
+  printf("Usage: mosamosaic -i IMG -d DIR -p DIMS -w WIDTH [-c COLOR_RATIO] [-v]\n\n");
+  printf("Create a tile mosaic from the input image using the database.\n");
+  printf("Examples: mosapic -i input.jpg -d database/ -w 20 -p 8\n");
+  printf("          mosapic -i input.jpg -d database/ -w 10 -c 0.8 -p 16 -v\n\n");
 
   printf("General options:\n");
   printf(" -h\tdisplay this help message\n");
@@ -30,7 +30,7 @@ void PrintHelpAndExit(const int code)
   printf("Mosaic options:\n");
   printf(" -i\timage IMG to create mosaic from\n");
   printf(" -d\tdatabase directory DIR containing the images\n");
-  printf(" -w\twidth WIDTH of the output image in hexagons, WIDTH > 0\n");
+  printf(" -w\twidth WIDTH of the output image in tiles, WIDTH > 0\n");
   printf(" -c\tcolor balancing ratio COLOR_RATIO in [0, 1]\n");
   printf(" -p\tpca dimensions DIMS in {1,...,100}\n");
   printf(" -v\tenable verbosity information\n");
@@ -40,11 +40,11 @@ void PrintHelpAndExit(const int code)
 
 int main(int argc, char *argv[])
 {
-  char *input_image     = 0;
-  char *database_dir    = 0;
-  int width_in_hexagons = 0;
-  int pca_dimensions    = 0;
-  float cb_ratio        = 0.0f;
+  char *input_image  = 0;
+  char *database_dir = 0;
+  int width_in_tiles = 0;
+  int pca_dimensions = 0;
+  float cb_ratio     = 0.0f;
 
   int c;
   if (argc == 2)
@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
       {
         case 'i': input_image = optarg; break;
         case 'd': database_dir = optarg; break;
-        case 'w': width_in_hexagons = atoi(optarg); break;
+        case 'w': width_in_tiles = atoi(optarg); break;
         case 'c': cb_ratio = atof(optarg); break;
         case 'v': Verbose::SetVerbosity(Verbose::DBG); break;
         case 'p': pca_dimensions = atoi(optarg); break;
@@ -87,13 +87,13 @@ int main(int argc, char *argv[])
     if (cb_ratio < 0.0f || cb_ratio > 1.0f)
       FatalLine("Error: Color balance ratio should be between 0 and 1");
 
-    if (width_in_hexagons <= 0)
+    if (width_in_tiles <= 0)
       FatalLine("Error: Width should be > 0");
 
     if (pca_dimensions < 1 || pca_dimensions > 100)
       FatalLine("Error: PCA dimensions should be between 1 and 100");
 
-    HexaMosaic hm(image, dir, width_in_hexagons, pca_dimensions, cb_ratio);
+    Mosapic hm(image, dir, width_in_tiles, pca_dimensions, cb_ratio);
     hm.Create();
   }
   else PrintHelpAndExit(EXIT_FAILURE);

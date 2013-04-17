@@ -1,11 +1,11 @@
-#include "HexaCrawler.hpp"
+#include "MosaCrawler.hpp"
 
 #include "../utils/Debugger.hpp"
 #include "../utils/Verbose.hpp"
 
 #ifdef ENABLE_CUDA
 #include "../utils/cuda/init.h"
-#include "../utils/cuda/gammacorrect.h"
+#include "../utils/cuda/process.h"
 #endif
 
 #include <math.h>
@@ -29,19 +29,19 @@ float lanczos(const float x, const float a)
   return sinc(x) * sinc(x/a);
 }
 
-HexaCrawler::HexaCrawler():
+MosaCrawler::MosaCrawler():
   mImgCount(0),
   mExistCount(0),
   mFailedCount(0),
   mClashCount(0),
-  mHasCuda(false)
+  mCudaIsInitialized(false)
 {
 #ifdef ENABLE_CUDA
-  mHasCuda = gpu::initCuda();
+  mCudaIsInitialized = gpu::initCuda();
 #endif
 }
 
-void HexaCrawler::Crawl(const QDir &input, const QDir &output, const int size, const bool fast, const float gamma)
+void MosaCrawler::Crawl(const QDir &input, const QDir &output, const int size, const bool fast, const float gamma)
 {
   mDstDir = output;
 
@@ -70,7 +70,7 @@ void HexaCrawler::Crawl(const QDir &input, const QDir &output, const int size, c
   NoticeLine("Processed " << mImgCount << " images");
 }
 
-void HexaCrawler::Crawl(const QDir &dir)
+void MosaCrawler::Crawl(const QDir &dir)
 {
   QFileInfoList list = dir.entryInfoList();
 
@@ -87,7 +87,7 @@ void HexaCrawler::Crawl(const QDir &dir)
   }
 }
 
-void HexaCrawler::Crop(QImage &image)
+void MosaCrawler::Crop(QImage &image)
 {
   if (image.width() == image.height())
     return;
@@ -98,7 +98,7 @@ void HexaCrawler::Crop(QImage &image)
   image = image.copy(x, y, min, min);
 }
 
-bool HexaCrawler::IsEqual(const QImage &a, const QImage &b)
+bool MosaCrawler::IsEqual(const QImage &a, const QImage &b)
 {
   if (a.isNull() || b.isNull())
     return false;
@@ -113,13 +113,13 @@ bool HexaCrawler::IsEqual(const QImage &a, const QImage &b)
   return true;
 }
 
-void HexaCrawler::GammaCorrect(QImage &image, const float gamma)
+void MosaCrawler::GammaCorrect(QImage &image, const float gamma)
 {
   for (int i = 0; i < image.numBytes(); i++)
     image.bits()[i] = roundf(powf(image.bits()[i] / 255.0f, gamma) * 255.0f);
 }
 
-void HexaCrawler::Resize(const QImage &image, QImage &resized)
+void MosaCrawler::Resize(const QImage &image, QImage &resized)
 {
   ASSERT(image.width() == image.height());
   if (mTileSize == image.width())
@@ -187,7 +187,7 @@ void HexaCrawler::Resize(const QImage &image, QImage &resized)
   }
 }
 
-void HexaCrawler::Process(const QFileInfo &info)
+void MosaCrawler::Process(const QFileInfo &info)
 {
   QImage image(info.absoluteFilePath());
 
@@ -201,15 +201,21 @@ void HexaCrawler::Process(const QFileInfo &info)
   }
 
   Crop(image);
+  if (image.format() != QImage::Format_RGB32)
+    image = image.convertToFormat(QImage::Format_RGB32);
+
   QImage resized(mTileSize, mTileSize, image.format());
 #ifdef ENABLE_CUDA
-  if (mHasCuda && !mFastResizing)
+  bool success = false;
+  if (mCudaIsInitialized && !mFastResizing)
   {
-    gpu::process(reinterpret_cast<uchar4*>(image.bits()), image.height(),
-                 reinterpret_cast<uchar4*>(resized.bits()), resized.height(),
-                 mGamma);
+    success =
+      gpu::process(reinterpret_cast<uchar4*>(image.bits()), image.height(),
+                   reinterpret_cast<uchar4*>(resized.bits()), resized.height(),
+                   mGamma);
   }
-  else
+
+  if (!success)
 #endif
   {
     if (mGamma != 1.0f)

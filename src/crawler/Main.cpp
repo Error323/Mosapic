@@ -4,7 +4,7 @@
 
 #include "../utils/Verbose.hpp"
 #include "Version.hpp"
-#include "HexaCrawler.hpp"
+#include "MosaCrawler.hpp"
 
 void PrintVersionAndExit(const int code)
 {
@@ -17,11 +17,11 @@ void PrintVersionAndExit(const int code)
 
 void PrintHelpAndExit(const int code)
 {
-  printf("Usage: hexacrawler -i DIR1 -o DIR2 -t N [-g GAMMA] [-v] [-f]\n\n");
+  printf("Usage: mosacrawler -i DIR1 -o DIR2 -t N [-g GAMMA] [-v] [-f]\n\n");
   printf("Crawls a directory for images and creates a database from them.\n");
-  printf("Examples: hexacrawler -i images/ -o database/ -t 100\n");
-  printf("          hexacrawler -i images/ -o database/ -t 128 -v -f\n");
-  printf("          hexacrawler -i images/ -o database/ -t 256 -g 2.2 -f\n\n");
+  printf("Examples: mosacrawler -i images/ -o database/ -t 100\n");
+  printf("          mosacrawler -i images/ -o database/ -t 128 -v -f\n");
+  printf("          mosacrawler -i images/ -o database/ -t 256 -g 2.2 -f\n\n");
 
   printf("General options:\n");
   printf(" -h\tdisplay this help message\n");
@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
     if (tile_size <= 0)
       FatalLine("Error: Tile size `" << tile_size << "' should be > 0");
 
-    HexaCrawler hc;
+    MosaCrawler hc;
     hc.Crawl(input, output, tile_size, fast, gamma);
   }
   else PrintHelpAndExit(EXIT_FAILURE);

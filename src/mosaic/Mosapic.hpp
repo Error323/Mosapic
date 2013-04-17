@@ -1,5 +1,5 @@
-#ifndef HEXAMOSAIC_HDR
-#define HEXAMOSAIC_HDR
+#ifndef MOSAPIC_H
+#define MOSAPIC_H
 
 #include <QtCore>
 #include <QtGui>
@@ -8,10 +8,10 @@
 
 using namespace Eigen;
 
-class HexaMosaic
+class Mosapic
 {
 public:
-  HexaMosaic(
+  Mosapic(
     QImage &image,
     const QDir &database,
     const int width,
@@ -53,4 +53,4 @@ private:
   float Distance(const RowVectorXf &a, const RowVectorXf &b);
 };
 
-#endif // HEXAMOSAIC_HDR
+#endif // MOSAPIC_H

@@ -1,4 +1,4 @@
-#include "HexaMosaic.hpp"
+#include "Mosapic.hpp"
 
 #include "../utils/pca/PCA.hpp"
 #include "../utils/Debugger.hpp"
@@ -8,7 +8,7 @@
 #include <queue>
 #include <cmath>
 
-HexaMosaic::HexaMosaic(QImage &image,
+Mosapic::Mosapic(QImage &image,
     const QDir &database,
     const int width,
     const int dimensions,
@@ -73,7 +73,7 @@ HexaMosaic::HexaMosaic(QImage &image,
   DebugLine("Output image tiles: " << mWidth << "x" << mHeight);
 }
 
-void HexaMosaic::Create()
+void Mosapic::Create()
 {
   /*****************************************************************************
    * 1. Resize source image to output image. Convert source image into tiles,
@@ -203,13 +203,13 @@ void HexaMosaic::Create()
   NoticeLine("\nImage stored as: " << qPrintable(file_name));
 }
 
-float HexaMosaic::Distance(const RowVectorXf &a, const RowVectorXf &b)
+float Mosapic::Distance(const RowVectorXf &a, const RowVectorXf &b)
 {
   ASSERT(a.cols() == b.cols());
   return sqrtf((a.array()-b.array()).square().sum());
 }
 
-void HexaMosaic::LoadDatabase(const QDir &dir)
+void Mosapic::LoadDatabase(const QDir &dir)
 {
   QFileInfoList list = dir.entryInfoList();
 

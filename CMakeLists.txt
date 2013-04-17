@@ -1,4 +1,4 @@
-project (hexapic CXX C)
+project (mosapic CXX C)
 cmake_minimum_required (VERSION 2.8)
 
 
@@ -46,8 +46,8 @@ execute_process (
 )
 
 configure_file (
-	"${hexapic_SOURCE_DIR}/cmake/Version.hpp.in"
-	"${hexapic_BINARY_DIR}/Version.hpp"
+	"${mosapic_SOURCE_DIR}/cmake/Version.hpp.in"
+	"${mosapic_BINARY_DIR}/Version.hpp"
 )
 
 
@@ -55,7 +55,7 @@ configure_file (
 # Include sources
 #-------------------------------------------------------------------------------
 include (cmake/sources.cmake)
-include_directories (${hexapic_BINARY_DIR})
+include_directories (${mosapic_BINARY_DIR})
 
 
 #-------------------------------------------------------------------------------
@@ -76,21 +76,22 @@ include_directories (
 # Define executable and link libraries
 #-------------------------------------------------------------------------------
 if (CUDA_FOUND)
-  cuda_add_executable (hexacrawler ${hexacrawler_SOURCE})
+  cuda_add_executable (mosacrawler ${mosacrawler_SOURCE})
 else (CUDA_FOUND)
-  add_executable (hexacrawler ${hexacrawler_SOURCE})
+  add_executable (mosacrawler ${mosacrawler_SOURCE})
 endif (CUDA_FOUND)
 
-target_link_libraries (hexacrawler
+target_link_libraries (mosacrawler
   ${QT_QTCORE_LIBRARY}
   ${QT_QTGUI_LIBRARY}
 )
 
-add_executable (hexamosaic ${hexamosaic_SOURCE})
-target_link_libraries (hexamosaic
+add_executable (mosapic ${mosapic_SOURCE})
+target_link_libraries (mosapic
   ${QT_QTCORE_LIBRARY}
   ${QT_QTGUI_LIBRARY}
 )
+
 
 #-------------------------------------------------------------------------------
 # Status report
