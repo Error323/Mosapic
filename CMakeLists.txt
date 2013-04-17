@@ -12,7 +12,7 @@ set (CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g")
 
 set (CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/modules")
 
-option (ENABLE_OPENMP "Enable/disable openmp (used by Eigen3)" OFF)
+option (ENABLE_OPENMP "Enable/disable openmp (used by Eigen3)" ON)
 option (ENABLE_PROFILING "Enable/disable profiling" OFF)
 option (ENABLE_CUDA "Enable/disable cuda" ON)
 
