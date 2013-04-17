@@ -18,7 +18,7 @@ void PrintVersionAndExit(const int code)
 
 void PrintHelpAndExit(const int code)
 {
-  printf("Usage: mosamosaic -i IMG -d DIR -p DIMS -w WIDTH [-c COLOR_RATIO] [-v]\n\n");
+  printf("Usage: mosapic -i IMG -d DIR -p DIMS -w WIDTH [-c COLOR_RATIO] [-v]\n\n");
   printf("Create a tile mosaic from the input image using the database.\n");
   printf("Examples: mosapic -i input.jpg -d database/ -w 20 -p 8\n");
   printf("          mosapic -i input.jpg -d database/ -w 10 -c 0.8 -p 16 -v\n\n");
