@@ -21,7 +21,7 @@ int iDivUp(int a, int b)
 __device__ float sinc(float x)
 {
   x *= CUDART_PI_F;
-  return __sinf(x) / x;
+  return sinf(x) / x;
 }
 
 __device__ float L(float x)
@@ -74,9 +74,9 @@ __global__ void gamma(uchar4 *src, uchar4 *dst, float g, int n)
 
   int index = y_i*n + x_i;
   float4 pixel = rgba2float(src[index]);
-  pixel.x = __powf(pixel.x, g);
-  pixel.y = __powf(pixel.y, g);
-  pixel.z = __powf(pixel.z, g);
+  pixel.x = powf(pixel.x, g);
+  pixel.y = powf(pixel.y, g);
+  pixel.z = powf(pixel.z, g);
   dst[index] = float2rgba(pixel);
 }
 
