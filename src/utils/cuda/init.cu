@@ -13,7 +13,7 @@ bool initCuda(void)
   bool has_cuda = (cudaGetDevice(&device)) == cudaSuccess;
   if (!has_cuda)
     return false;
-
+  cudaSafeCall(cudaDeviceReset());
   cudaDeviceProp prop;
   cudaSafeCall(cudaGetDeviceProperties(&prop, device));
 
@@ -26,6 +26,7 @@ bool initCuda(void)
   DebugLine("  Concurrent kernels:   " << prop.concurrentKernels);
   DebugLine("  Shared mem per block: " << prop.sharedMemPerBlock);
   DebugLine("  Warpsize:             " << prop.warpSize);
+  DebugLine("  Registers per block:  " << prop.regsPerBlock);
   DebugLine("  Free/Total:           " << freeMemory() << "/" << totalMemory());
   DebugLine("");
 
@@ -55,4 +56,12 @@ size_t totalMemory()
   return total_memory;
 }
 
+size_t sharedMemory()
+{
+  int device;
+  cudaSafeCall(cudaGetDevice(&device));
+  cudaDeviceProp prop;
+  cudaSafeCall(cudaGetDeviceProperties(&prop, device));
+  return prop.sharedMemPerBlock;
+}
 }

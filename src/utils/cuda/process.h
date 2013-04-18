@@ -6,7 +6,7 @@
 namespace gpu
 {
 __device__ float sinc(float x);
-__device__ float L(float x);
+__device__ float lanczos(float x);
 
 __global__ void transpose(uchar4 *odata,
                           uchar4 *idata,
@@ -18,13 +18,21 @@ __global__ void gamma(uchar4 *src,
                       float g,
                       int n);
 
-__global__ void lanczos(uchar4 *src,
-                        uchar4 *dst,
-                        int nSrc,
-                        int nDst,
-                        float factor,
-                        float scale,
-                        float support);
+__global__ void lanczosGlobalMem(uchar4 *src,
+                                 uchar4 *dst,
+                                 int nSrc,
+                                 int nDst,
+                                 float factor,
+                                 float scale,
+                                 float support);
+
+__global__ void lanczosSharedMem(uchar4 *src,
+                                 uchar4 *dst,
+                                 int nSrc,
+                                 int nDst,
+                                 float factor,
+                                 float scale,
+                                 float support);
 
 bool process(uchar4 *src,
              const int srcSize,

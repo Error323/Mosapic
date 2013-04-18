@@ -218,6 +218,7 @@ void MosaCrawler::Process(const QFileInfo &info)
   if (!success)
 #endif
   {
+    Debug("[cpu]");
     if (mGamma != 1.0f)
       GammaCorrect(image, mGamma);
 

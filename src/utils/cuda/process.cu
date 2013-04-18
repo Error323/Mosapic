@@ -9,8 +9,7 @@
 #define BLOCK_DIM_2D 16
 #define LANCZOS_WIDTH 2.0f
 #define MAX_SUPPORT 64
-#define MAX_KERNEL_SIZE (MAX_SUPPORT*int(LANCZOS_WIDTH)+3)
-#define SPACE (MAX_KERNEL_SIZE / BLOCK_DIM_2D + 1)
+#define MAX_KERNEL_SIZE (MAX_SUPPORT*int(LANCZOS_WIDTH))
 
 namespace gpu
 {
@@ -25,7 +24,7 @@ __device__ float sinc(float x)
   return __sinf(x) / x;
 }
 
-__device__ float L(float x)
+__device__ float lanczos(float x)
 {
   if (x == 0.0f)
     return 1.0f;
@@ -83,7 +82,7 @@ __global__ void gamma(uchar4 *src, uchar4 *dst, float g, int n)
 
 
 
-__global__ void lanczos(uchar4 *src, uchar4 *dst, int nSrc, int nDst, float factor, float scale, float support)
+__global__ void lanczosGlobalMem(uchar4 *src, uchar4 *dst, int nSrc, int nDst, float factor, float scale, float support)
 {
   int x = blockIdx.x*BLOCK_DIM_2D + threadIdx.x;
   int y = blockIdx.y*BLOCK_DIM_2D + threadIdx.y;
@@ -108,7 +107,7 @@ __global__ void lanczos(uchar4 *src, uchar4 *dst, int nSrc, int nDst, float fact
   for (int i = 0; i < n_y; i++)
   {
     float phase = start_y + i - center_y + 0.5f;
-    density += kernel_y[i] = L(factor*phase);
+    density += kernel_y[i] = lanczos(factor*phase);
   }
   for (int i = 0; i < n_y; i++)
     kernel_y[i] /= density;
@@ -117,7 +116,7 @@ __global__ void lanczos(uchar4 *src, uchar4 *dst, int nSrc, int nDst, float fact
   for (int i = 0; i < n_x; i++)
   {
     float phase = start_x + i - center_x + 0.5f;
-    density += kernel_x[i] = L(factor*phase);
+    density += kernel_x[i] = lanczos(factor*phase);
   }
   for (int i = 0; i < n_x; i++)
     kernel_x[i] /= density;
@@ -142,6 +141,69 @@ __global__ void lanczos(uchar4 *src, uchar4 *dst, int nSrc, int nDst, float fact
 
 
 
+__global__ void lanczosSharedMem(uchar4 *src, uchar4 *dst, int nSrc, int nDst, float factor, float scale, float support)
+{
+  int x = blockIdx.x*BLOCK_DIM_2D + threadIdx.x;
+  int y = blockIdx.y*BLOCK_DIM_2D + threadIdx.y;
+
+  if (x >= nDst || y >= nDst)
+    return;
+
+  float center_y = (y + 0.5f) * scale;
+  float center_x = (x + 0.5f) * scale;
+  int start_y = max(int(center_y-support+0.5f), 0);
+  int start_x = max(int(center_x-support+0.5f), 0);
+  int stop_y  = min(int(center_y+support+0.5f), nSrc);
+  int stop_x  = min(int(center_x+support+0.5f), nSrc);
+  int n_y = stop_y - start_y;
+  int n_x = stop_x - start_x;
+
+  extern __shared__ uchar4 s_src[];
+  s_src[threadIdx.y*BLOCK_DIM_2D+threadIdx.x] = src[int(center_y)*nSrc+int(center_x)];
+  __syncthreads();
+
+  // compute kernels
+  float kernel_x[MAX_KERNEL_SIZE];
+  float kernel_y[MAX_KERNEL_SIZE];
+
+  float density = 0.0f;
+  for (int i = 0; i < n_y; i++)
+  {
+    float phase = start_y + i - center_y + 0.5f;
+    density += kernel_y[i] = lanczos(factor*phase);
+  }
+  for (int i = 0; i < n_y; i++)
+    kernel_y[i] /= density;
+
+  density = 0.0f;
+  for (int i = 0; i < n_x; i++)
+  {
+    float phase = start_x + i - center_x + 0.5f;
+    density += kernel_x[i] = lanczos(factor*phase);
+  }
+  for (int i = 0; i < n_x; i++)
+    kernel_x[i] /= density;
+
+  // apply kernels and store result in resized image
+  float4 p = make_float4(0.0f, 0.0f, 0.0f, 0.0f);
+  uchar4 rgba;
+  float lanczos_xy;
+  for (int i = 0; i < n_y; i++)
+  {
+    for (int j = 0; j < n_x; j++)
+    {
+      lanczos_xy = kernel_y[i] * kernel_x[j];
+      rgba = s_src[threadIdx.y*BLOCK_DIM_2D+threadIdx.x];
+      p.x += lanczos_xy * rgba.x;
+      p.y += lanczos_xy * rgba.y;
+      p.z += lanczos_xy * rgba.z;
+    }
+  }
+  dst[y*nDst+x] = pixel(p);
+}
+
+
+
 bool process(uchar4 *src, const int srcSize,
              uchar4 *dst, const int dstSize,
              const float g)
@@ -149,20 +211,15 @@ bool process(uchar4 *src, const int srcSize,
   size_t src_mem = srcSize*srcSize*sizeof(uchar4);
   size_t dst_mem = dstSize*dstSize*sizeof(uchar4);
   if (src_mem+dst_mem > gpu::freeMemory())
-  {
-    WarningLine("Warning: Not enough memory on cuda device, proceeding on cpu");
     return false;
-  }
 
   float factor  = dstSize / float(srcSize);
   float scale   = 1.0f / factor;
   float support = scale * LANCZOS_WIDTH;
+  size_t shared = int(support)*BLOCK_DIM_2D*BLOCK_DIM_2D*sizeof(uchar4);
 
   if (support > MAX_SUPPORT)
-  {
-    WarningLine("Warning: Scaling factor too big, proceeding on cpu");
     return false;
-  }
 
   dim3 blocks, threads;
   uchar4 *d_src, *d_dst;
@@ -176,7 +233,16 @@ bool process(uchar4 *src, const int srcSize,
 
   blocks  = dim3(iDivUp(dstSize, BLOCK_DIM_2D), iDivUp(dstSize, BLOCK_DIM_2D));
   threads = dim3(BLOCK_DIM_2D, BLOCK_DIM_2D);
-  lanczos<<<blocks, threads>>>(d_src, d_dst, srcSize, dstSize, factor, scale, support);
+  if (shared > sharedMemory())
+  {
+    Debug("[gpu-g]");
+    lanczosGlobalMem<<<blocks, threads>>>(d_src, d_dst, srcSize, dstSize, factor, scale, support);
+  }
+  else
+  {
+    Debug("[gpu-s]");
+    lanczosSharedMem<<<blocks, threads, shared>>>(d_src, d_dst, srcSize, dstSize, factor, scale, support);
+  }
 
   blocks  = dim3(iDivUp(dstSize, BLOCK_DIM_2D), iDivUp(dstSize, BLOCK_DIM_2D));
   threads = dim3(BLOCK_DIM_2D, BLOCK_DIM_2D);

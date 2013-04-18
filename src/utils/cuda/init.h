@@ -18,6 +18,7 @@ static inline void ___cudaSafeCall(cudaError_t err, const char *file, const int 
 bool initCuda(void);
 size_t freeMemory(void);
 size_t totalMemory(void);
+size_t sharedMemory(void);
 }
 
 #endif // INIT_CUH
