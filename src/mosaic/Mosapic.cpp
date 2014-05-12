@@ -136,7 +136,7 @@ void Mosapic::Create()
     }
   }
   mSourceImg.save(QString("reduced-")+QString::number(mDimensions)+".jpg");
-#endif
+#endif // NDEBUG
   NoticeLine("[done]");
 
   /*****************************************************************************

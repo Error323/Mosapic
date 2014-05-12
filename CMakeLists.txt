@@ -26,7 +26,8 @@ endif (ENABLE_OPENMP)
 
 if (ENABLE_PROFILING)
   set (CMAKE_BUILD_TYPE "Release")
-  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -pg -fno-omit-frame-pointer")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--no-as-needed")
+  link_libraries(profiler) # google perf-tools profiler
 endif (ENABLE_PROFILING)
 
 if (ENABLE_CUDA)
@@ -76,7 +77,9 @@ include_directories (
 # Define executable and link libraries
 #-------------------------------------------------------------------------------
 if (CUDA_FOUND)
-  cuda_add_executable (mosacrawler ${mosacrawler_SOURCE})
+  cuda_add_executable (mosacrawler 
+  ${mosacrawler_SOURCE}
+  OPTIONS -arch=sm_30)
 else (CUDA_FOUND)
   add_executable (mosacrawler ${mosacrawler_SOURCE})
 endif (CUDA_FOUND)

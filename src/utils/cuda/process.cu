@@ -182,4 +182,4 @@ bool process(uchar4 *src, const int srcSize,
 
   return true;
 }
-}
+} // namespace gpu

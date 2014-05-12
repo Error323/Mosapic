@@ -7,7 +7,7 @@
 
 #include <execinfo.h>
 
-#define BREAKPOINT asm("int $3")
+#define BREAKPOINT __builtin_trap()
 #define END() BREAKPOINT
 #define FORMAT_STRING "***ASSERTION FAILED***\n\n\tfile\t%s\n\tline\t%d\n\tfunc\t%s\n\tcond\t%s\n"
 #define FORMAT_STRING_MSG FORMAT_STRING"\ttext\t"
